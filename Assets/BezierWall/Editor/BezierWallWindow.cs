@@ -16,9 +16,14 @@ namespace MagicTavern.BezierWall.Editor
         private static readonly Color HandleColor = new Color32(255, 202, 117, 255);
         private static readonly Color DecorationColor = new Color32(202, 178, 255, 255);
         private static readonly string[] Tabs = { "描点", "成品预览" };
+        private static readonly string[] Endpoints = { "自动选最近端点", "起点", "终点" };
 
         [SerializeField] private BezierWallSettings settings = new BezierWallSettings();
         [SerializeField] private BezierWallLayout currentDraft;
+        [SerializeField] private BezierWallLayout joinDraft;
+        [SerializeField] private int currentJoinEndpoint;
+        [SerializeField] private int sourceJoinEndpoint;
+        [SerializeField] private float joinSnapDistance = 0.35f;
         [SerializeField] private Vector2 viewportCenter;
         [SerializeField] private float scale = 60f;
         [SerializeField] private int activeTab;
@@ -162,6 +167,8 @@ namespace MagicTavern.BezierWall.Editor
             GUILayout.Label("墙线路径", EditorStyles.boldLabel);
             SerializedProperty mode = data.FindPropertyRelative(nameof(settings.PathMode));
             EditorGUILayout.PropertyField(mode, new GUIContent("路径类型"));
+            SerializedProperty closed = data.FindPropertyRelative(nameof(settings.Closed));
+            EditorGUILayout.PropertyField(closed, new GUIContent("首尾闭合", "沿路径连接最后一个描点和第一个描点。至少需要三个描点。"));
             bool rounded = mode.enumValueIndex == (int)WallPathMode.RoundedPolyline;
             if (rounded)
             {
@@ -210,9 +217,10 @@ namespace MagicTavern.BezierWall.Editor
                     EditorGUILayout.PropertyField(automatic, new GUIContent("自动切线"));
                     if (!automatic.boolValue)
                     {
-                        if (selected > 0)
+                        bool loopHandles = closed.boolValue && settings.Anchors.Count >= 3;
+                        if (selected > 0 || loopHandles)
                             EditorGUILayout.PropertyField(point.FindPropertyRelative(nameof(BezierWallAnchor.Incoming)), new GUIContent("入控制柄偏移"));
-                        if (selected < settings.Anchors.Count - 1)
+                        if (selected < settings.Anchors.Count - 1 || loopHandles)
                             EditorGUILayout.PropertyField(point.FindPropertyRelative(nameof(BezierWallAnchor.Outgoing)), new GUIContent("出控制柄偏移"));
                     }
                 }
@@ -227,7 +235,63 @@ namespace MagicTavern.BezierWall.Editor
 
             if (selected >= 0 && GUILayout.Button("删除选中描点"))
                 DeleteSelected();
+
+            if (!settings.Closed)
+                DrawJoinSettings();
             EditorGUILayout.Space(7f);
+        }
+
+        private void DrawJoinSettings()
+        {
+            EditorGUILayout.Space(6f);
+            GUILayout.Label("接墙", EditorStyles.boldLabel);
+            var source = (BezierWallLayout)EditorGUILayout.ObjectField("接入草稿", joinDraft, typeof(BezierWallLayout), false);
+            if (source != joinDraft)
+            {
+                joinDraft = source;
+                frameRequested = true;
+                Repaint();
+            }
+
+            if (joinDraft == null)
+                return;
+
+            currentJoinEndpoint = EditorGUILayout.Popup("当前墙端点", currentJoinEndpoint, Endpoints);
+            sourceJoinEndpoint = EditorGUILayout.Popup("接入墙端点", sourceJoinEndpoint, Endpoints);
+            joinSnapDistance = EditorGUILayout.FloatField(
+                new GUIContent("吸附距离", "允许两个端点相距的最大 Unity 单位数。接入段的其他点保持场景位置。"), joinSnapDistance);
+
+            EditorGUILayout.HelpBox("蓝色虚线是接入草稿。接墙后使用当前墙的路径类型和样式。", MessageType.None);
+            using (new EditorGUI.DisabledScope(settings.Anchors.Count < 2))
+            {
+                if (GUILayout.Button("吸附并接墙"))
+                    JoinDraft();
+            }
+        }
+
+        private void JoinDraft()
+        {
+            if (!BezierWallJoins.TryJoin(settings, joinDraft.Settings, joinSnapDistance,
+                    EndpointChoice(currentJoinEndpoint), EndpointChoice(sourceJoinEndpoint), out BezierWallSettings joined, out string error))
+            {
+                Notify(error);
+                return;
+            }
+
+            Undo.RecordObject(this, "吸附并接墙");
+            settings = joined;
+            joinDraft = null;
+            selected = -1;
+            frameRequested = true;
+            OnShapeChanged();
+            Notify("已合并两段墙的描点。");
+        }
+
+        private static bool? EndpointChoice(int choice)
+        {
+            if (choice == 0)
+                return null;
+            return choice == 1;
         }
 
         private static void DrawOpeningSettings(SerializedProperty data)
@@ -357,14 +421,15 @@ namespace MagicTavern.BezierWall.Editor
 
             Handles.BeginGUI();
             DrawGrid(area);
+            DrawJoinGuide(area.size);
             DrawTracePath(area.size);
 
             if (UsesBezier && selected >= 0 && selected < settings.Anchors.Count)
             {
                 BezierWallAnchor anchor = settings.Anchors[selected];
-                if (selected > 0)
+                if (HasIncomingHandle(selected))
                     DrawHandle(anchor.Position, anchor.Incoming, area.size);
-                if (selected < settings.Anchors.Count - 1)
+                if (HasOutgoingHandle(selected))
                     DrawHandle(anchor.Position, anchor.Outgoing, area.size);
             }
 
@@ -381,6 +446,25 @@ namespace MagicTavern.BezierWall.Editor
                 DrawCanvasHint("沿着墙脚轮廓点击放置描点。放置两个以上描点后即可预览。", area);
         }
 
+        private void DrawJoinGuide(Vector2 areaSize)
+        {
+            if (settings.Closed || joinDraft == null || joinDraft.Settings.Anchors.Count < 2)
+                return;
+
+            List<BezierWallAnchor> anchors = joinDraft.Settings.Anchors;
+            Vector2 offset = joinDraft.Settings.Origin - settings.Origin;
+            var color = new Color(0.51f, 0.74f, 1f, 0.75f);
+            Handles.color = color;
+            for (int i = 1; i < anchors.Count; i++)
+            {
+                Handles.DrawDottedLine(ToScreen(anchors[i - 1].Position + offset, areaSize),
+                    ToScreen(anchors[i].Position + offset, areaSize), 4f);
+            }
+
+            DrawDot(ToScreen(anchors[0].Position + offset, areaSize), 4.5f, color);
+            DrawDot(ToScreen(anchors[anchors.Count - 1].Position + offset, areaSize), 4.5f, color);
+        }
+
         private void DrawTracePath(Vector2 areaSize)
         {
             if (!UsesBezier)
@@ -390,6 +474,12 @@ namespace MagicTavern.BezierWall.Editor
                 {
                     Handles.DrawDottedLine(ToScreen(settings.Anchors[i - 1].Position, areaSize),
                         ToScreen(settings.Anchors[i].Position, areaSize), 4f);
+                }
+
+                if (settings.Closed && settings.Anchors.Count >= 3)
+                {
+                    Handles.DrawDottedLine(ToScreen(settings.Anchors[settings.Anchors.Count - 1].Position, areaSize),
+                        ToScreen(settings.Anchors[0].Position, areaSize), 4f);
                 }
             }
 
@@ -572,12 +662,12 @@ namespace MagicTavern.BezierWall.Editor
             if (UsesBezier && selected >= 0)
             {
                 BezierWallAnchor anchor = settings.Anchors[selected];
-                if (selected > 0 && NearHandle(mouse, anchor, anchor.Incoming, size))
+                if (HasIncomingHandle(selected) && NearHandle(mouse, anchor, anchor.Incoming, size))
                 {
                     dragMode = DragMode.Incoming;
                     return;
                 }
-                if (selected < settings.Anchors.Count - 1 && NearHandle(mouse, anchor, anchor.Outgoing, size))
+                if (HasOutgoingHandle(selected) && NearHandle(mouse, anchor, anchor.Outgoing, size))
                 {
                     dragMode = DragMode.Outgoing;
                     return;
@@ -604,6 +694,11 @@ namespace MagicTavern.BezierWall.Editor
             selected = settings.Anchors.Count - 1;
             OnShapeChanged();
         }
+
+        private bool HasIncomingHandle(int index) => index > 0 || settings.Closed && settings.Anchors.Count >= 3;
+
+        private bool HasOutgoingHandle(int index) =>
+            index < settings.Anchors.Count - 1 || settings.Closed && settings.Anchors.Count >= 3;
 
         private bool NearHandle(Vector2 mouse, BezierWallAnchor anchor, Vector2 offset, Vector2 size)
         {
@@ -679,6 +774,7 @@ namespace MagicTavern.BezierWall.Editor
             if (draft != null)
             {
                 settings = draft.Settings.Copy();
+                joinDraft = null;
                 selected = -1;
                 activeTab = 0;
                 frameRequested = true;
@@ -690,6 +786,7 @@ namespace MagicTavern.BezierWall.Editor
         {
             Undo.RecordObject(this, "新建弧形墙草稿");
             currentDraft = null;
+            joinDraft = null;
             settings = new BezierWallSettings();
             selected = -1;
             activeTab = 0;
@@ -732,7 +829,7 @@ namespace MagicTavern.BezierWall.Editor
         private void OnShapeChanged()
         {
             if (UsesBezier)
-                BezierWallGeometry.UpdateAutomaticTangents(settings.Anchors);
+                BezierWallGeometry.UpdateAutomaticTangents(settings.Anchors, settings.Closed);
             traceDirty = true;
             previewDirty = true;
             Repaint();
@@ -847,6 +944,22 @@ namespace MagicTavern.BezierWall.Editor
                         bounds.Encapsulate(anchor.Position + anchor.Incoming);
                         bounds.Encapsulate(anchor.Position + anchor.Outgoing);
                     }
+                }
+            }
+
+            if (activeTab == 0 && !settings.Closed && joinDraft != null)
+            {
+                Vector2 offset = joinDraft.Settings.Origin - settings.Origin;
+                foreach (BezierWallAnchor anchor in joinDraft.Settings.Anchors)
+                {
+                    Vector2 position = anchor.Position + offset;
+                    if (!found)
+                    {
+                        bounds = new Bounds(position, Vector3.zero);
+                        found = true;
+                    }
+
+                    bounds.Encapsulate(position);
                 }
             }
 

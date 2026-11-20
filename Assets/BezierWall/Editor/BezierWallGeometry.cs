@@ -31,7 +31,7 @@ namespace MagicTavern.BezierWall.Editor
         private static readonly Color32 CapMarker = new Color32(0, 0, 255, 255);
         private static readonly Color32 BottomMarker = new Color32(0, 0, 0, 255);
 
-        internal static void UpdateAutomaticTangents(IReadOnlyList<BezierWallAnchor> anchors)
+        internal static void UpdateAutomaticTangents(IReadOnlyList<BezierWallAnchor> anchors, bool closed = false)
         {
             for (int i = 0; i < anchors.Count; i++)
             {
@@ -39,8 +39,10 @@ namespace MagicTavern.BezierWall.Editor
                 if (!anchor.Automatic)
                     continue;
 
-                Vector2 previous = i > 0 ? anchor.Position - anchors[i - 1].Position : Vector2.zero;
-                Vector2 next = i + 1 < anchors.Count ? anchors[i + 1].Position - anchor.Position : Vector2.zero;
+                int previousIndex = (i + anchors.Count - 1) % anchors.Count;
+                int nextIndex = (i + 1) % anchors.Count;
+                Vector2 previous = i > 0 || closed ? anchor.Position - anchors[previousIndex].Position : Vector2.zero;
+                Vector2 next = nextIndex != 0 || closed ? anchors[nextIndex].Position - anchor.Position : Vector2.zero;
                 Vector2 direction = (previous.normalized + next.normalized).normalized;
                 anchor.Incoming = direction == Vector2.zero ? -previous / 3f : -direction * (previous.magnitude / 3f);
                 anchor.Outgoing = direction == Vector2.zero ? next / 3f : direction * (next.magnitude / 3f);
@@ -78,19 +80,32 @@ namespace MagicTavern.BezierWall.Editor
                     out float afterDistance, out error))
                 return false;
 
+            bool wrapped = settings.Closed && after == null;
+            float firstDistance = 0f;
+            if (settings.Closed && after != null)
+            {
+                // The second solid run ends at the exact same point as the start of the first.
+                for (int i = 1; i < before.Count; i++)
+                    after.Add(before[i]);
+                before = after;
+                after = null;
+                firstDistance = afterDistance;
+            }
+
             int runCount = after == null ? 1 : 2;
             int sectionCount = before.Count + (after?.Count ?? 0);
-            int vertexCount = sectionCount * VerticesPerSection + runCount * 8;
+            int cappedRuns = wrapped ? 0 : runCount;
+            int vertexCount = sectionCount * VerticesPerSection + cappedRuns * 8;
             var vertices = new List<Vector3>(vertexCount);
             var uvs = new List<Vector2>(vertexCount);
             var colors = new List<Color32>(vertexCount);
-            var triangles = new List<int>((sectionCount - runCount) * 24 + runCount * 12);
+            var triangles = new List<int>((sectionCount - runCount) * 24 + cappedRuns * 12);
             var outlines = new Vector2[runCount][];
-            if (!TryAppendRun(before, 0f, settings, vertices, uvs, colors, triangles, out outlines[0], out error))
+            if (!TryAppendRun(before, firstDistance, wrapped, settings, vertices, uvs, colors, triangles, out outlines[0], out error))
                 return false;
 
             if (after != null
-                && !TryAppendRun(after, afterDistance, settings, vertices, uvs, colors, triangles, out outlines[1], out error))
+                && !TryAppendRun(after, afterDistance, false, settings, vertices, uvs, colors, triangles, out outlines[1], out error))
                 return false;
 
             mesh = new Mesh
@@ -105,11 +120,24 @@ namespace MagicTavern.BezierWall.Editor
             mesh.RecalculateNormals();
             mesh.RecalculateTangents();
             mesh.RecalculateBounds();
-            footprints = outlines;
+            if (wrapped)
+            {
+                SmoothClosedSeam(mesh);
+                int middle = before.Count / 2;
+                // Two filled strips preserve the hole and use the same rail sections on their shared edges.
+                footprints = new[]
+                {
+                    SliceOutline(outlines[0], 0, middle),
+                    SliceOutline(outlines[0], middle, before.Count - 1)
+                };
+            }
+            else
+                footprints = outlines;
+
             return true;
         }
 
-        private static bool TryAppendRun(List<Vector2> path, float distance, BezierWallSettings settings,
+        private static bool TryAppendRun(List<Vector2> path, float distance, bool wrapped, BezierWallSettings settings,
             List<Vector3> vertices, List<Vector2> uvs, List<Color32> colors, List<int> triangles,
             out Vector2[] outline, out string error)
         {
@@ -127,23 +155,33 @@ namespace MagicTavern.BezierWall.Editor
             for (int i = 0; i < path.Count; i++)
             {
                 Vector2 center = path[i];
-                Vector2 incoming = i > 0 ? center - path[i - 1] : path[1] - center;
-                Vector2 outgoing = i + 1 < path.Count ? path[i + 1] - center : incoming;
-                Vector2 incomingDirection = incoming.normalized;
-                Vector2 side = RightOf((incomingDirection + outgoing.normalized).normalized);
-                float alignment = Vector2.Dot(side, RightOf(incomingDirection));
-                if (alignment < MinimumJoinAlignment)
-                {
-                    error = "墙线转折过急，请调整描点或转角参数。";
-                    return false;
-                }
+                int previousIndex = i - 1;
+                if (wrapped && i == 0)
+                    previousIndex = path.Count - 2;
 
-                Vector2 offset = side * (thickness * 0.5f / alignment);
-                var section = new WallSection(center + offset, center - offset);
-                if (!IsFinite(section.Positive) || !IsFinite(section.Negative) || section.Positive.Equals(section.Negative))
+                Vector2 incoming = previousIndex >= 0 ? center - path[previousIndex] : path[1] - center;
+                Vector2 incomingDirection = incoming.normalized;
+                WallSection section;
+                if (wrapped && i == path.Count - 1)
+                    section = firstSection;
+                else
                 {
-                    error = "墙厚与描点坐标的比例超出可生成范围。";
-                    return false;
+                    Vector2 outgoing = i + 1 < path.Count ? path[i + 1] - center : incoming;
+                    Vector2 side = RightOf((incomingDirection + outgoing.normalized).normalized);
+                    float alignment = Vector2.Dot(side, RightOf(incomingDirection));
+                    if (alignment < MinimumJoinAlignment)
+                    {
+                        error = "墙线转折过急，请调整描点或转角参数。";
+                        return false;
+                    }
+
+                    Vector2 offset = side * (thickness * 0.5f / alignment);
+                    section = new WallSection(center + offset, center - offset);
+                    if (!IsFinite(section.Positive) || !IsFinite(section.Negative) || section.Positive.Equals(section.Negative))
+                    {
+                        error = "墙厚与描点坐标的比例超出可生成范围。";
+                        return false;
+                    }
                 }
 
                 if (i == 0)
@@ -177,16 +215,63 @@ namespace MagicTavern.BezierWall.Editor
                 previousSection = section;
             }
 
-            float capUV = thickness / tileSize.x;
-            AddCap(vertices, uvs, colors, triangles, firstSection.Positive, firstSection.Negative, height, capUV, verticalUV);
-            AddCap(vertices, uvs, colors, triangles, previousSection.Negative, previousSection.Positive, height, capUV, verticalUV);
+            if (!wrapped)
+            {
+                float capUV = thickness / tileSize.x;
+                AddCap(vertices, uvs, colors, triangles, firstSection.Positive, firstSection.Negative, height, capUV, verticalUV);
+                AddCap(vertices, uvs, colors, triangles, previousSection.Negative, previousSection.Positive, height, capUV, verticalUV);
+            }
+
             return true;
+        }
+
+        private static Vector2[] SliceOutline(Vector2[] outline, int firstSection, int lastSection)
+        {
+            int count = lastSection - firstSection + 1;
+            var strip = new Vector2[count * 2];
+            Array.Copy(outline, firstSection, strip, 0, count);
+            Array.Copy(outline, outline.Length - 1 - lastSection, strip, count, count);
+            return strip;
+        }
+
+        internal static void SmoothClosedSeam(Mesh mesh)
+        {
+            Vector3[] normals = mesh.normals;
+            Vector4[] tangents = mesh.tangents;
+            int lastSection = normals.Length - VerticesPerSection;
+            for (int i = 0; i < VerticesPerSection; i++)
+            {
+                int end = lastSection + i;
+                Vector3 firstNormal = normals[i];
+                Vector3 lastNormal = normals[end];
+                Vector3 normal = (firstNormal + lastNormal).normalized;
+                if (normal == Vector3.zero)
+                    continue;
+
+                // Projection can discard one side of a seam, leaving that duplicate without a face normal.
+                Vector4 firstTangent = tangents[i];
+                Vector4 lastTangent = tangents[end];
+                Vector3 tangent = Vector3.zero;
+                if (firstNormal != Vector3.zero)
+                    tangent += (Vector3)firstTangent;
+                if (lastNormal != Vector3.zero)
+                    tangent += (Vector3)lastTangent;
+                tangent = (tangent - normal * Vector3.Dot(normal, tangent)).normalized;
+                float handedness = firstNormal != Vector3.zero ? firstTangent.w : lastTangent.w;
+                normals[i] = normals[end] = normal;
+                tangents[i] = tangents[end] = new Vector4(tangent.x, tangent.y, tangent.z, handedness);
+            }
+
+            mesh.normals = normals;
+            mesh.tangents = tangents;
         }
 
         internal static bool TrySplitOpening(BezierWallSettings settings, List<Vector2> path,
             out List<Vector2> before, out List<Vector2> after, out float afterDistance, out string error)
         {
-            const string bothSidesRequired = "门洞两侧都要保留墙段。请缩小宽度或把门洞移向墙线内部。";
+            string bothSidesRequired = settings.Closed
+                ? "闭环门洞需要避开墙线起点。请缩小宽度或调整门洞位置。"
+                : "门洞两侧都要保留墙段。请缩小宽度或把门洞移向墙线内部。";
             before = null;
             after = null;
             afterDistance = 0f;
@@ -295,9 +380,10 @@ namespace MagicTavern.BezierWall.Editor
             path = null;
             error = null;
             IReadOnlyList<BezierWallAnchor> anchors = settings.Anchors;
-            if (anchors == null || anchors.Count < 2)
+            int minimumAnchors = settings.Closed ? 3 : 2;
+            if (anchors == null || anchors.Count < minimumAnchors)
             {
-                error = "请至少添加两个描点。";
+                error = settings.Closed ? "闭合路径至少需要三个不同的描点。" : "请至少添加两个描点。";
                 return false;
             }
 
@@ -307,6 +393,7 @@ namespace MagicTavern.BezierWall.Editor
                 return false;
             }
 
+            HashSet<Vector2> loopPositions = settings.Closed ? new HashSet<Vector2>() : null;
             foreach (BezierWallAnchor anchor in anchors)
             {
                 if (anchor == null || !IsFinite(anchor.Position))
@@ -314,15 +401,21 @@ namespace MagicTavern.BezierWall.Editor
                     error = "描点坐标必须是有效数值。";
                     return false;
                 }
+
+                if (loopPositions != null && !loopPositions.Add(anchor.Position))
+                {
+                    error = "闭合路径不能有重复描点。墙线会自动连接首尾。";
+                    return false;
+                }
             }
 
             switch (settings.PathMode)
             {
                 case WallPathMode.Bezier:
-                    return TrySampleBezier(anchors, settings.Subdivisions, out path, out error);
+                    return TrySampleBezier(anchors, settings.Subdivisions, settings.Closed, out path, out error);
                 case WallPathMode.RoundedPolyline:
                     return TrySampleRoundedPolyline(anchors, settings.CornerRadius, settings.Thickness,
-                        settings.Subdivisions, out path, out error);
+                        settings.Subdivisions, settings.Closed, out path, out error);
                 default:
                     error = "无法识别墙线路径模式。";
                     return false;
@@ -330,17 +423,18 @@ namespace MagicTavern.BezierWall.Editor
         }
 
         private static bool TrySampleBezier(
-            IReadOnlyList<BezierWallAnchor> anchors, int subdivisions, out List<Vector2> path, out string error)
+            IReadOnlyList<BezierWallAnchor> anchors, int subdivisions, bool closed, out List<Vector2> path, out string error)
         {
             path = null;
             error = null;
-            if ((long)(anchors.Count - 1) * subdivisions >= MaxSampleCount)
+            int segmentCount = closed ? anchors.Count : anchors.Count - 1;
+            if ((long)segmentCount * subdivisions >= MaxSampleCount)
             {
                 error = "曲线采样点过多，请减少细分或描点。";
                 return false;
             }
 
-            UpdateAutomaticTangents(anchors);
+            UpdateAutomaticTangents(anchors, closed);
             foreach (BezierWallAnchor anchor in anchors)
             {
                 if (!IsFinite(anchor.Incoming) || !IsFinite(anchor.Outgoing))
@@ -350,18 +444,22 @@ namespace MagicTavern.BezierWall.Editor
                 }
             }
 
-            var samples = new List<Vector2>((anchors.Count - 1) * subdivisions + 1) { anchors[0].Position };
-            for (int i = 1; i < anchors.Count; i++)
+            var samples = new List<Vector2>(segmentCount * subdivisions + 1) { anchors[0].Position };
+            for (int i = 0; i < segmentCount; i++)
             {
-                BezierWallAnchor first = anchors[i - 1];
-                BezierWallAnchor second = anchors[i];
-                for (int step = 1; step <= subdivisions; step++)
+                BezierWallAnchor first = anchors[i];
+                BezierWallAnchor second = anchors[(i + 1) % anchors.Count];
+                int lastStep = closed && i == segmentCount - 1 ? subdivisions - 1 : subdivisions;
+                for (int step = 1; step <= lastStep; step++)
                 {
                     Vector2 point = step == subdivisions ? second.Position : Evaluate(first, second, (float)step / subdivisions);
                     if (!TryAppendSample(samples, point, out error))
                         return false;
                 }
             }
+
+            if (closed && !TryClosePath(samples, out error))
+                return false;
 
             if (samples.Count < 2)
             {
@@ -374,7 +472,7 @@ namespace MagicTavern.BezierWall.Editor
         }
 
         private static bool TrySampleRoundedPolyline(IReadOnlyList<BezierWallAnchor> anchors, float radius,
-            float thickness, int subdivisions, out List<Vector2> path, out string error)
+            float thickness, int subdivisions, bool closed, out List<Vector2> path, out string error)
         {
             path = null;
             error = null;
@@ -384,11 +482,12 @@ namespace MagicTavern.BezierWall.Editor
                 return false;
             }
 
-            var directions = new Vector2[anchors.Count - 1];
+            int segmentCount = closed ? anchors.Count : anchors.Count - 1;
+            var directions = new Vector2[segmentCount];
             var lengths = new float[directions.Length];
             for (int i = 0; i < directions.Length; i++)
             {
-                Vector2 edge = anchors[i + 1].Position - anchors[i].Position;
+                Vector2 edge = anchors[(i + 1) % anchors.Count].Position - anchors[i].Position;
                 float length = edge.magnitude;
                 if (!IsFinite(length) || length <= PointEpsilon)
                 {
@@ -401,11 +500,13 @@ namespace MagicTavern.BezierWall.Editor
             }
 
             var corners = new (float Turn, float SetbackFactor, int Steps)[anchors.Count];
-            int sampleCount = anchors.Count;
+            int sampleCount = closed ? anchors.Count + 1 : anchors.Count;
             float minimumRadius = 0f;
-            for (int i = 1; i < anchors.Count - 1; i++)
+            int firstCorner = closed ? 0 : 1;
+            int lastCorner = closed ? anchors.Count - 1 : anchors.Count - 2;
+            for (int i = firstCorner; i <= lastCorner; i++)
             {
-                Vector2 incoming = directions[i - 1];
+                Vector2 incoming = directions[(i + segmentCount - 1) % segmentCount];
                 Vector2 outgoing = directions[i];
                 float cross = incoming.x * outgoing.y - incoming.y * outgoing.x;
                 float turn = Mathf.Atan2(cross, Vector2.Dot(incoming, outgoing));
@@ -433,11 +534,17 @@ namespace MagicTavern.BezierWall.Editor
                 minimumRadius = Mathf.Max(minimumRadius, minimumForCorner);
             }
 
+            if (sampleCount > MaxSampleCount)
+            {
+                error = "曲线采样点过多，请减少细分或描点。";
+                return false;
+            }
+
             float maximumRadius = float.PositiveInfinity;
             for (int i = 0; i < lengths.Length; i++)
             {
                 // Trim both corners of a shared straight segment using one radius.
-                float factor = corners[i].SetbackFactor + corners[i + 1].SetbackFactor;
+                float factor = corners[i].SetbackFactor + corners[(i + 1) % anchors.Count].SetbackFactor;
                 if (factor > 0f)
                     maximumRadius = Mathf.Min(maximumRadius, (lengths[i] - PointEpsilon) / factor);
             }
@@ -454,8 +561,12 @@ namespace MagicTavern.BezierWall.Editor
                 return false;
             }
 
-            var samples = new List<Vector2>(sampleCount) { anchors[0].Position };
-            for (int i = 1; i < anchors.Count - 1; i++)
+            Vector2 start = anchors[0].Position;
+            if (closed && corners[0].Steps > 0)
+                start -= directions[directions.Length - 1] * (radius * corners[0].SetbackFactor);
+
+            var samples = new List<Vector2>(sampleCount) { start };
+            for (int i = firstCorner; i <= lastCorner; i++)
             {
                 var corner = corners[i];
                 Vector2 position = anchors[i].Position;
@@ -467,7 +578,7 @@ namespace MagicTavern.BezierWall.Editor
                 }
 
                 float setback = radius * corner.SetbackFactor;
-                Vector2 incoming = directions[i - 1];
+                Vector2 incoming = directions[(i + segmentCount - 1) % segmentCount];
                 Vector2 entry = position - incoming * setback;
                 Vector2 exit = position + directions[i] * setback;
                 Vector2 radial = RightOf(incoming) * (Mathf.Sign(corner.Turn) * radius);
@@ -475,11 +586,32 @@ namespace MagicTavern.BezierWall.Editor
                     return false;
             }
 
-            if (!TryAppendSample(samples, anchors[anchors.Count - 1].Position, out error))
+            if (closed)
+            {
+                if (!TryClosePath(samples, out error))
+                    return false;
+            }
+            else if (!TryAppendSample(samples, anchors[anchors.Count - 1].Position, out error))
                 return false;
 
             path = samples;
             return true;
+        }
+
+        private static bool TryClosePath(List<Vector2> samples, out string error)
+        {
+            Vector2 start = samples[0];
+            float minSquaredDistance = PointEpsilon * PointEpsilon;
+            while (samples.Count > 1 && (samples[samples.Count - 1] - start).sqrMagnitude <= minSquaredDistance)
+                samples.RemoveAt(samples.Count - 1);
+
+            if (samples.Count < 3)
+            {
+                error = "闭合墙线的有效路径过短。请拉开描点间距。";
+                return false;
+            }
+
+            return TryAppendSample(samples, start, out error);
         }
 
         private static bool TryAppendArc(List<Vector2> path, Vector2 entry, Vector2 exit, Vector2 radial,

@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db58f1f0e66e4bb1b68df141b5a92a73, type: 3}
+  m_Name: Terrace Flower Bed Layout
+  m_EditorClassIdentifier:
+  Settings:
+    Reference: {fileID: 21300000, guid: 77acb1043a0204078a27c519559864d6, type: 3}
+    ReferenceCenter: {x: 0, y: 0}
+    ReferenceWidth: 2.56
+    ReferenceOpacity: 0.95
+    PathMode: 1
+    Closed: 1
+    CornerRadius: 0.3
+    OpeningEnabled: 0
+    OpeningPosition: 0.5
+    OpeningWidth: 1
+    DecorationPrefab: {fileID: 0}
+    DecorationSpacing: 1.25
+    DecorationClearance: 0.3
+    Height: 0.24
+    Thickness: 0.14
+    Lean: 0.08
+    Subdivisions: 22
+    TopColor: {r: 0.8627451, g: 0.7764706, b: 0.92941177, a: 1}
+    SideColor: {r: 0.5647059, g: 0.4392157, b: 0.65882355, a: 1}
+    SurfaceTexture: {fileID: 0}
+    Material: {fileID: 0}
+    TileSize: {x: 1, y: 1}
+    Origin: {x: -1.1, y: 0.35, z: 0}
+    SortingLayer: 0
+    SortingOrder: 3
+    AddCollider: 1
+    Anchors:
+    - Position: {x: -1.1, y: -0.46}
+      Incoming: {x: 0, y: 0}
+      Outgoing: {x: 0, y: 0}
+      Automatic: 1
+    - Position: {x: 1.1, y: -0.46}
+      Incoming: {x: 0, y: 0}
+      Outgoing: {x: 0, y: 0}
+      Automatic: 1
+    - Position: {x: 1.1, y: 0.46}
+      Incoming: {x: 0, y: 0}
+      Outgoing: {x: 0, y: 0}
+      Automatic: 1
+    - Position: {x: -1.1, y: 0.46}
+      Incoming: {x: 0, y: 0}
+      Outgoing: {x: 0, y: 0}
+      Automatic: 1

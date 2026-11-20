@@ -64,7 +64,10 @@ namespace MagicTavern.BezierWall.Editor
             for (int i = 1; i < path.Count; i++)
                 distances[i] = distances[i - 1] + Vector2.Distance(path[i - 1], path[i]);
 
-            double slotCount = Math.Ceiling(distances[distances.Length - 1] / spacing - 0.5);
+            double length = distances[distances.Length - 1];
+            double slotCount = settings.Closed
+                ? Math.Max(1, Math.Floor(length / spacing))
+                : Math.Ceiling(length / spacing - 0.5);
             if (slotCount > MaxSlots)
             {
                 error = $"墙线的摆件候选位置超过 {MaxSlots} 个。请增大摆件间距。";
@@ -81,11 +84,12 @@ namespace MagicTavern.BezierWall.Editor
                 opening = GetOpeningPath(path, distances, before, after, out openingStart, out openingEnd);
 
             int candidateCount = (int)slotCount;
+            double effectiveSpacing = settings.Closed ? length / candidateCount : spacing;
             var result = new List<BezierWallDecorationPlacement>(candidateCount);
             int upper = 1;
             for (int slot = 0; slot < candidateCount; slot++)
             {
-                double distance = (slot + 0.5) * spacing;
+                double distance = (slot + 0.5) * effectiveSpacing;
                 if (opening != null && distance >= openingStart - DistanceEpsilon && distance <= openingEnd + DistanceEpsilon)
                     continue;
 

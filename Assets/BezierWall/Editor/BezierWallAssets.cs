@@ -65,6 +65,8 @@ namespace MagicTavern.BezierWall.Editor
                 return false;
 
             BezierWallProjection.Apply(mesh, settings.Lean, settings.TopColor, settings.SideColor);
+            if (settings.Closed && !settings.OpeningEnabled)
+                BezierWallGeometry.SmoothClosedSeam(mesh);
             if (mesh.GetIndexCount(0) > 0)
                 return true;
 

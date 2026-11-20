@@ -25,6 +25,7 @@ namespace MagicTavern.BezierWall.Editor
         public float ReferenceOpacity = 0.7f;
 
         public WallPathMode PathMode = WallPathMode.Bezier;
+        public bool Closed = false;
         public float CornerRadius = 0.3f;
         public bool OpeningEnabled = false;
         public float OpeningPosition = 0.5f;
