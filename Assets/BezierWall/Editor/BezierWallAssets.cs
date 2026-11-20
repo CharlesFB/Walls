@@ -48,17 +48,17 @@ namespace MagicTavern.BezierWall.Editor
             return texture != null;
         }
 
-        internal static bool TryBuild(BezierWallSettings settings, out Mesh mesh, out Vector2[] footprint, out string error)
+        internal static bool TryBuild(BezierWallSettings settings, out Mesh mesh, out Vector2[][] footprints, out string error)
         {
             if (float.IsNaN(settings.Lean) || float.IsInfinity(settings.Lean) || Mathf.Abs(settings.Lean) > 2f)
             {
                 mesh = null;
-                footprint = null;
+                footprints = null;
                 error = "墙顶倾斜比例必须介于 -2 和 2 之间。";
                 return false;
             }
 
-            if (!BezierWallGeometry.TryBuild(settings, out mesh, out error, out footprint))
+            if (!BezierWallGeometry.TryBuild(settings, out mesh, out error, out footprints))
                 return false;
 
             BezierWallProjection.Apply(mesh, settings.Lean, settings.TopColor, settings.SideColor);
@@ -67,6 +67,7 @@ namespace MagicTavern.BezierWall.Editor
 
             Object.DestroyImmediate(mesh);
             mesh = null;
+            footprints = null;
             error = "当前参数未生成可见墙面。";
             return false;
         }
@@ -97,7 +98,7 @@ namespace MagicTavern.BezierWall.Editor
                 return false;
             }
 
-            if (!TryBuild(settings, out Mesh mesh, out Vector2[] footprint, out error))
+            if (!TryBuild(settings, out Mesh mesh, out Vector2[][] footprints, out error))
                 return false;
 
             Material generated = settings.Material == null ? CreateCartoonMaterial(settings) : null;
@@ -126,7 +127,12 @@ namespace MagicTavern.BezierWall.Editor
             renderer.receiveShadows = false;
 
             if (settings.AddCollider)
-                wall.AddComponent<PolygonCollider2D>().SetPath(0, footprint);
+            {
+                var collider = wall.AddComponent<PolygonCollider2D>();
+                collider.pathCount = footprints.Length;
+                for (int i = 0; i < footprints.Length; i++)
+                    collider.SetPath(i, footprints[i]);
+            }
 
             Undo.RegisterCreatedObjectUndo(wall, "创建 2D 弧形墙");
             EditorSceneManager.MarkSceneDirty(wall.scene);

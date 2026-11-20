@@ -19,6 +19,9 @@ MonoBehaviour:
     ReferenceOpacity: 0.9
     PathMode: 1
     CornerRadius: 0.48
+    OpeningEnabled: 1
+    OpeningPosition: 0.373
+    OpeningWidth: 1.28
     Height: 0.55
     Thickness: 0.18
     Lean: 0.12

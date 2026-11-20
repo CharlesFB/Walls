@@ -30,6 +30,7 @@ namespace MagicTavern.BezierWall.Editor
         private bool frameRequested = true;
         private bool traceDirty = true;
         private List<Vector2> tracePath;
+        private List<Vector2> traceAfterOpening;
         private string traceError;
         private bool previewDirty = true;
         private string previewError;
@@ -165,6 +166,7 @@ namespace MagicTavern.BezierWall.Editor
 
             EditorGUILayout.IntSlider(data.FindPropertyRelative(nameof(settings.Subdivisions)), 4, 48,
                 new GUIContent(rounded ? "每 90° 弧段细分" : "每段曲线细分"));
+            DrawOpeningSettings(data);
 
             EditorGUILayout.Space(6f);
             GUILayout.Label("薄墙外观", EditorStyles.boldLabel);
@@ -219,6 +221,25 @@ namespace MagicTavern.BezierWall.Editor
             if (selected >= 0 && GUILayout.Button("删除选中描点"))
                 DeleteSelected();
             EditorGUILayout.Space(7f);
+        }
+
+        private static void DrawOpeningSettings(SerializedProperty data)
+        {
+            SerializedProperty enabled = data.FindPropertyRelative(nameof(BezierWallSettings.OpeningEnabled));
+            EditorGUILayout.PropertyField(enabled, new GUIContent("启用门洞"));
+            if (!enabled.boolValue)
+                return;
+
+            SerializedProperty position = data.FindPropertyRelative(nameof(BezierWallSettings.OpeningPosition));
+            EditorGUI.BeginChangeCheck();
+            float percent = EditorGUILayout.Slider(
+                new GUIContent("门洞位置 (%)", "门洞中心沿墙脚路径的位置。从第一个描点开始计为 0%。"),
+                position.floatValue * 100f, 0f, 100f);
+            if (EditorGUI.EndChangeCheck())
+                position.floatValue = percent / 100f;
+
+            EditorGUILayout.PropertyField(data.FindPropertyRelative(nameof(BezierWallSettings.OpeningWidth)),
+                new GUIContent("门洞宽度", "门洞沿墙脚路径的长度，单位为 Unity 单位。"));
         }
 
         private void DrawImageField(SerializedProperty property, string name, string label)
@@ -348,18 +369,33 @@ namespace MagicTavern.BezierWall.Editor
             {
                 traceDirty = false;
                 tracePath = null;
+                traceAfterOpening = null;
                 traceError = null;
                 if (settings.Anchors.Count >= 2
-                    && !BezierWallGeometry.TrySamplePath(settings, out tracePath, out traceError))
-                    tracePath = null;
+                    && BezierWallGeometry.TrySamplePath(settings, out List<Vector2> sampled, out traceError))
+                {
+                    BezierWallGeometry.TrySplitOpening(settings, sampled,
+                        out tracePath, out traceAfterOpening, out _, out traceError);
+                }
             }
 
             if (tracePath == null)
                 return;
 
-            var points = new Vector3[tracePath.Count];
+            DrawTraceRun(tracePath, areaSize);
+            if (traceAfterOpening != null)
+            {
+                DrawTraceRun(traceAfterOpening, areaSize);
+                DrawDot(ToScreen(tracePath[tracePath.Count - 1], areaSize), 4f, HandleColor);
+                DrawDot(ToScreen(traceAfterOpening[0], areaSize), 4f, HandleColor);
+            }
+        }
+
+        private void DrawTraceRun(List<Vector2> path, Vector2 areaSize)
+        {
+            var points = new Vector3[path.Count];
             for (int i = 0; i < points.Length; i++)
-                points[i] = ToScreen(tracePath[i], areaSize);
+                points[i] = ToScreen(path[i], areaSize);
 
             Handles.color = CanvasColor;
             Handles.DrawAAPolyLine(6f, points);

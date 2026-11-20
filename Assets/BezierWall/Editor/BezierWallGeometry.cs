@@ -56,11 +56,11 @@ namespace MagicTavern.BezierWall.Editor
                 + t * t * t * second.Position;
         }
 
-        internal static bool TryBuild(BezierWallSettings settings, out Mesh mesh, out string error, out Vector2[] footprint)
+        internal static bool TryBuild(BezierWallSettings settings, out Mesh mesh, out string error, out Vector2[][] footprints)
         {
             mesh = null;
             error = null;
-            footprint = null;
+            footprints = null;
             float height = settings.Height;
             float thickness = settings.Thickness;
             Vector2 tileSize = settings.TileSize;
@@ -73,18 +73,54 @@ namespace MagicTavern.BezierWall.Editor
                 return false;
             }
 
-            if (!TrySamplePath(settings, out List<Vector2> path, out error))
+            if (!TrySamplePath(settings, out List<Vector2> path, out error)
+                || !TrySplitOpening(settings, path, out List<Vector2> before, out List<Vector2> after,
+                    out float afterDistance, out error))
                 return false;
 
-            int vertexCount = path.Count * VerticesPerSection + 8;
+            int runCount = after == null ? 1 : 2;
+            int sectionCount = before.Count + (after?.Count ?? 0);
+            int vertexCount = sectionCount * VerticesPerSection + runCount * 8;
             var vertices = new List<Vector3>(vertexCount);
             var uvs = new List<Vector2>(vertexCount);
             var colors = new List<Color32>(vertexCount);
-            var triangles = new List<int>((path.Count - 1) * 24 + 12);
-            var outline = new Vector2[path.Count * 2];
+            var triangles = new List<int>((sectionCount - runCount) * 24 + runCount * 12);
+            var outlines = new Vector2[runCount][];
+            if (!TryAppendRun(before, 0f, settings, vertices, uvs, colors, triangles, out outlines[0], out error))
+                return false;
+
+            if (after != null
+                && !TryAppendRun(after, afterDistance, settings, vertices, uvs, colors, triangles, out outlines[1], out error))
+                return false;
+
+            mesh = new Mesh
+            {
+                name = "Bezier Wall",
+                indexFormat = vertexCount > ushort.MaxValue ? IndexFormat.UInt32 : IndexFormat.UInt16
+            };
+            mesh.SetVertices(vertices);
+            mesh.SetUVs(0, uvs);
+            mesh.SetColors(colors);
+            mesh.SetTriangles(triangles, 0, false);
+            mesh.RecalculateNormals();
+            mesh.RecalculateTangents();
+            mesh.RecalculateBounds();
+            footprints = outlines;
+            return true;
+        }
+
+        private static bool TryAppendRun(List<Vector2> path, float distance, BezierWallSettings settings,
+            List<Vector3> vertices, List<Vector2> uvs, List<Color32> colors, List<int> triangles,
+            out Vector2[] outline, out string error)
+        {
+            error = null;
+            float height = settings.Height;
+            float thickness = settings.Thickness;
+            Vector2 tileSize = settings.TileSize;
+            int firstVertex = vertices.Count;
+            outline = new Vector2[path.Count * 2];
             var firstSection = default(WallSection);
             var previousSection = default(WallSection);
-            float distance = 0f;
             float verticalUV = height / tileSize.y;
             float topUV = thickness / tileSize.y;
 
@@ -122,7 +158,7 @@ namespace MagicTavern.BezierWall.Editor
                     }
 
                     distance += incoming.magnitude;
-                    int current = i * VerticesPerSection;
+                    int current = firstVertex + i * VerticesPerSection;
                     int previous = current - VerticesPerSection;
                     for (int face = 0; face < VerticesPerSection; face += 2)
                         AddQuad(triangles, previous + face, previous + face + 1, current + face, current + face + 1);
@@ -144,21 +180,114 @@ namespace MagicTavern.BezierWall.Editor
             float capUV = thickness / tileSize.x;
             AddCap(vertices, uvs, colors, triangles, firstSection.Positive, firstSection.Negative, height, capUV, verticalUV);
             AddCap(vertices, uvs, colors, triangles, previousSection.Negative, previousSection.Positive, height, capUV, verticalUV);
-
-            mesh = new Mesh
-            {
-                name = "Bezier Wall",
-                indexFormat = vertexCount > ushort.MaxValue ? IndexFormat.UInt32 : IndexFormat.UInt16
-            };
-            mesh.SetVertices(vertices);
-            mesh.SetUVs(0, uvs);
-            mesh.SetColors(colors);
-            mesh.SetTriangles(triangles, 0, false);
-            mesh.RecalculateNormals();
-            mesh.RecalculateTangents();
-            mesh.RecalculateBounds();
-            footprint = outline;
             return true;
+        }
+
+        internal static bool TrySplitOpening(BezierWallSettings settings, List<Vector2> path,
+            out List<Vector2> before, out List<Vector2> after, out float afterDistance, out string error)
+        {
+            const string bothSidesRequired = "门洞两侧都要保留墙段。请缩小宽度或把门洞移向墙线内部。";
+            before = null;
+            after = null;
+            afterDistance = 0f;
+            error = null;
+            if (!settings.OpeningEnabled)
+            {
+                before = path;
+                return true;
+            }
+
+            if (path == null || path.Count < 2)
+            {
+                error = "墙线需要至少两个采样点才能设置门洞。";
+                return false;
+            }
+
+            if (!IsFinite(settings.OpeningPosition) || settings.OpeningPosition < 0f || settings.OpeningPosition > 1f)
+            {
+                error = "门洞位置必须在墙线长度的 0% 到 100% 之间。";
+                return false;
+            }
+
+            if (!IsFinite(settings.OpeningWidth) || settings.OpeningWidth <= PointEpsilon)
+            {
+                error = "门洞宽度必须是有效的正数，并大于可分辨的最小宽度。";
+                return false;
+            }
+
+            var distances = new double[path.Count];
+            for (int i = 1; i < path.Count; i++)
+            {
+                float segmentLength = Vector2.Distance(path[i - 1], path[i]);
+                if (!IsPositive(segmentLength))
+                {
+                    error = "墙线上存在长度无效的线段，无法计算门洞位置。";
+                    return false;
+                }
+
+                distances[i] = distances[i - 1] + segmentLength;
+            }
+
+            double length = distances[distances.Length - 1];
+            double center = length * settings.OpeningPosition;
+            double halfWidth = settings.OpeningWidth * 0.5;
+            double start = center - halfWidth;
+            double end = center + halfWidth;
+            if (start <= PointEpsilon || length - end <= PointEpsilon)
+            {
+                error = bothSidesRequired;
+                return false;
+            }
+
+            OpeningCut first = FindOpeningCut(path, distances, start);
+            OpeningCut last = FindOpeningCut(path, distances, end);
+            if (first.Distance <= PointEpsilon || length - last.Distance <= PointEpsilon)
+            {
+                error = bothSidesRequired;
+                return false;
+            }
+
+            if (last.Distance - first.Distance <= PointEpsilon
+                || (last.Position - first.Position).sqrMagnitude <= PointEpsilon * PointEpsilon)
+            {
+                error = "门洞的两个切点过近。请增大宽度或调整位置。";
+                return false;
+            }
+
+            before = path.GetRange(0, first.LowerIndex + 1);
+            if (first.LowerIndex != first.UpperIndex)
+                before.Add(first.Position);
+
+            after = new List<Vector2>(path.Count - last.UpperIndex + 1);
+            if (last.LowerIndex != last.UpperIndex)
+                after.Add(last.Position);
+            for (int i = last.UpperIndex; i < path.Count; i++)
+                after.Add(path[i]);
+
+            afterDistance = (float)last.Distance;
+            return true;
+        }
+
+        private static OpeningCut FindOpeningCut(IReadOnlyList<Vector2> path, double[] distances, double distance)
+        {
+            int index = Array.BinarySearch(distances, distance);
+            if (index >= 0)
+                return new OpeningCut(path[index], distances[index], index, index);
+
+            int upper = ~index;
+            int lower = upper - 1;
+            double fromLower = distance - distances[lower];
+            double toUpper = distances[upper] - distance;
+            Vector2 point = Vector2.LerpUnclamped(path[lower], path[upper], (float)(fromLower / (fromLower + toUpper)));
+            float minSquaredDistance = PointEpsilon * PointEpsilon;
+            bool nearLower = fromLower <= PointEpsilon || (point - path[lower]).sqrMagnitude <= minSquaredDistance;
+            bool nearUpper = toUpper <= PointEpsilon || (point - path[upper]).sqrMagnitude <= minSquaredDistance;
+            if (nearLower && (!nearUpper || fromLower <= toUpper))
+                return new OpeningCut(path[lower], distances[lower], lower, lower);
+            if (nearUpper)
+                return new OpeningCut(path[upper], distances[upper], upper, upper);
+
+            return new OpeningCut(point, distance, lower, upper);
         }
 
         internal static bool TrySamplePath(BezierWallSettings settings, out List<Vector2> path, out string error)
@@ -452,6 +581,22 @@ namespace MagicTavern.BezierWall.Editor
         private static bool IsFinite(float value)
         {
             return !float.IsNaN(value) && !float.IsInfinity(value);
+        }
+
+        private readonly struct OpeningCut
+        {
+            internal readonly Vector2 Position;
+            internal readonly double Distance;
+            internal readonly int LowerIndex;
+            internal readonly int UpperIndex;
+
+            internal OpeningCut(Vector2 position, double distance, int lowerIndex, int upperIndex)
+            {
+                Position = position;
+                Distance = distance;
+                LowerIndex = lowerIndex;
+                UpperIndex = upperIndex;
+            }
         }
 
         private readonly struct WallSection
