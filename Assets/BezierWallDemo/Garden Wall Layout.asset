@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db58f1f0e66e4bb1b68df141b5a92a73, type: 3}
+  m_Name: Garden Wall Layout
+  m_EditorClassIdentifier: 
+  Settings:
+    Reference: {fileID: 21300000, guid: 14d4e09099cea42f8aad54729af2e430, type: 3}
+    ReferenceCenter: {x: 0, y: 0}
+    ReferenceWidth: 10
+    ReferenceOpacity: 0.87
+    Height: 0.56
+    Thickness: 0.19
+    Lean: 0.1
+    Subdivisions: 24
+    TopColor: {r: 1, g: 0.8666667, b: 0.6156863, a: 1}
+    SideColor: {r: 0.8235294, g: 0.49803922, b: 0.34509805, a: 1}
+    SurfaceTexture: {fileID: 0}
+    Material: {fileID: 0}
+    TileSize: {x: 1, y: 1}
+    Origin: {x: 0, y: 0, z: 0}
+    SortingLayer: 0
+    SortingOrder: 5
+    AddCollider: 1
+    Anchors:
+    - Position: {x: -3.55, y: -0.02}
+      Incoming: {x: -0, y: 0}
+      Outgoing: {x: 0.19999996, y: -0.30999997}
+      Automatic: 1
+    - Position: {x: -2.95, y: -0.95}
+      Incoming: {x: -0.2819704, y: 0.23789214}
+      Outgoing: {x: 0.30475992, y: -0.25711915}
+      Automatic: 1
+    - Position: {x: -1.85, y: -1.42}
+      Incoming: {x: -0.38828343, y: 0.09069094}
+      Outgoing: {x: 0.4713812, y: -0.11009999}
+      Automatic: 1
+    - Position: {x: -0.4, y: -1.5}
+      Incoming: {x: -0.47984076, y: -0.06383636}
+      Outgoing: {x: 0.49423242, y: 0.06575098}
+      Automatic: 1
+    - Position: {x: 1.02, y: -1.03}
+      Incoming: {x: -0.4229066, y: -0.2640812}
+      Outgoing: {x: 0.35189092, y: 0.21973592}
+      Automatic: 1
+    - Position: {x: 1.89, y: -0.14}
+      Incoming: {x: -0.22549593, y: -0.34822792}
+      Outgoing: {x: 0.19278559, y: 0.29771414}
+      Automatic: 1
+    - Position: {x: 2.28, y: 0.85}
+      Incoming: {x: -0.12999998, y: -0.33}
+      Outgoing: {x: 0, y: 0}
+      Automatic: 1
