@@ -20,6 +20,7 @@ namespace MagicTavern.BezierWall.Editor
 
         [SerializeField] private BezierWallSettings settings = new BezierWallSettings();
         [SerializeField] private BezierWallLayout currentDraft;
+        [SerializeField] private BezierWallStylePreset stylePreset;
         [SerializeField] private BezierWallLayout joinDraft;
         [SerializeField] private int currentJoinEndpoint;
         [SerializeField] private int sourceJoinEndpoint;
@@ -153,6 +154,8 @@ namespace MagicTavern.BezierWall.Editor
                 }
             }
 
+            DrawStyleSettings();
+
             serializedWindow.Update();
             SerializedProperty data = serializedWindow.FindProperty(nameof(settings));
             EditorGUILayout.Space(8f);
@@ -190,7 +193,12 @@ namespace MagicTavern.BezierWall.Editor
             var material = data.FindPropertyRelative(nameof(settings.Material));
             using (new EditorGUI.DisabledScope(material.objectReferenceValue != null))
             {
-                DrawImageField(data, nameof(settings.SurfaceTexture), "墙面贴图");
+                SerializedProperty separate = data.FindPropertyRelative(nameof(settings.UseSeparateTopTexture));
+                EditorGUILayout.PropertyField(separate, new GUIContent("独立顶面贴图"));
+                DrawImageField(data, nameof(settings.SurfaceTexture), separate.boolValue ? "侧面贴图" : "墙面贴图");
+                if (separate.boolValue)
+                    DrawImageField(data, nameof(settings.TopTexture), "顶面贴图");
+
                 EditorGUILayout.PropertyField(data.FindPropertyRelative(nameof(settings.TileSize)), new GUIContent("贴图平铺尺寸"));
             }
 
@@ -239,6 +247,61 @@ namespace MagicTavern.BezierWall.Editor
             if (!settings.Closed)
                 DrawJoinSettings();
             EditorGUILayout.Space(7f);
+        }
+
+        private void DrawStyleSettings()
+        {
+            EditorGUILayout.Space(6f);
+            GUILayout.Label("墙体样式", EditorStyles.boldLabel);
+            stylePreset = (BezierWallStylePreset)EditorGUILayout.ObjectField("样式预设", stylePreset,
+                typeof(BezierWallStylePreset), false);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(stylePreset == null || stylePreset.Style == null))
+                {
+                    if (GUILayout.Button("套用预设"))
+                    {
+                        Undo.RecordObject(this, "套用墙体样式");
+                        stylePreset.Style.ApplyTo(settings);
+                        InvalidatePreviews();
+                    }
+                }
+
+                if (GUILayout.Button("另存预设"))
+                    SaveStylePreset();
+
+                using (new EditorGUI.DisabledScope(stylePreset == null))
+                {
+                    if (GUILayout.Button("更新预设"))
+                    {
+                        Undo.RecordObject(stylePreset, "更新墙体样式");
+                        stylePreset.Style = BezierWallStyle.Capture(settings);
+                        EditorUtility.SetDirty(stylePreset);
+                        AssetDatabase.SaveAssetIfDirty(stylePreset);
+                    }
+                }
+            }
+        }
+
+        private void SaveStylePreset()
+        {
+            string path = EditorUtility.SaveFilePanelInProject("另存墙体样式预设", "墙体样式", "asset", "选择预设的保存位置。");
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            if (AssetDatabase.LoadMainAssetAtPath(path) != null)
+            {
+                Notify("该路径已有资产，请选择另一个文件名。");
+                return;
+            }
+
+            var preset = CreateInstance<BezierWallStylePreset>();
+            preset.Style = BezierWallStyle.Capture(settings);
+            AssetDatabase.CreateAsset(preset, path);
+            AssetDatabase.SaveAssetIfDirty(preset);
+            stylePreset = preset;
+            EditorGUIUtility.PingObject(preset);
         }
 
         private void DrawJoinSettings()
@@ -830,6 +893,11 @@ namespace MagicTavern.BezierWall.Editor
         {
             if (UsesBezier)
                 BezierWallGeometry.UpdateAutomaticTangents(settings.Anchors, settings.Closed);
+            InvalidatePreviews();
+        }
+
+        private void InvalidatePreviews()
+        {
             traceDirty = true;
             previewDirty = true;
             Repaint();

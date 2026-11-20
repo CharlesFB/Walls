@@ -64,7 +64,8 @@ namespace MagicTavern.BezierWall.Editor
             if (!BezierWallGeometry.TryBuild(settings, out mesh, out error, out footprints))
                 return false;
 
-            BezierWallProjection.Apply(mesh, settings.Lean, settings.TopColor, settings.SideColor);
+            BezierWallProjection.Apply(mesh, settings.Lean, settings.TopColor, settings.SideColor,
+                settings.UseSeparateTopTexture);
             if (settings.Closed && !settings.OpeningEnabled)
                 BezierWallGeometry.SmoothClosedSeam(mesh);
             if (mesh.GetIndexCount(0) > 0)
@@ -84,13 +85,23 @@ namespace MagicTavern.BezierWall.Editor
                 return null;
 
             var material = new Material(shader) { name = "Cartoon Wall" };
-            if (TryGetImage(settings.SurfaceTexture, out Texture2D texture, out Rect uv))
+            SetMaterialImage(material, settings.SurfaceTexture, "_MainTex", "_TextureRect");
+            if (settings.UseSeparateTopTexture)
             {
-                material.SetTexture("_MainTex", texture);
-                material.SetVector("_TextureRect", new Vector4(uv.x, uv.y, uv.width, uv.height));
+                material.SetFloat("_UseSeparateTopTex", 1f);
+                SetMaterialImage(material, settings.TopTexture, "_TopTex", "_TopTextureRect");
             }
 
             return material;
+        }
+
+        private static void SetMaterialImage(Material material, Object asset, string textureProperty, string rectProperty)
+        {
+            if (!TryGetImage(asset, out Texture2D texture, out Rect uv))
+                return;
+
+            material.SetTexture(textureProperty, texture);
+            material.SetVector(rectProperty, new Vector4(uv.x, uv.y, uv.width, uv.height));
         }
 
         internal static bool TryBake(BezierWallSettings settings, string path, string objectName,

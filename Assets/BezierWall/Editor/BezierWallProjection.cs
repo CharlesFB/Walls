@@ -17,11 +17,12 @@ namespace MagicTavern.BezierWall.Editor
             }
         }
 
-        public static void Apply(Mesh mesh, float lean, Color topColor, Color sideColor)
+        public static void Apply(Mesh mesh, float lean, Color topColor, Color sideColor, bool useSeparateTopTexture = false)
         {
             Vector3[] vertices = mesh.vertices;
             Color32[] faceMarkers = mesh.colors32;
             Color32[] colors = new Color32[vertices.Length];
+            List<Vector2> textureFaces = useSeparateTopTexture ? new List<Vector2>(vertices.Length) : null;
             Color32 top = topColor;
             Color32 side = sideColor;
             Color32 cap = Color.Lerp(sideColor, new Color(0f, 0f, 0f, sideColor.a), 0.23f);
@@ -33,6 +34,8 @@ namespace MagicTavern.BezierWall.Editor
 
                 Color32 marker = faceMarkers[i];
                 colors[i] = marker.r > 0 ? top : marker.b > 0 ? cap : side;
+                // A negative sentinel distinguishes this mask from missing UV data on older meshes.
+                textureFaces?.Add(new Vector2(marker.r > 0 ? 1f : 0f, -1f));
             }
 
             int[] sourceIndices = mesh.triangles;
@@ -62,6 +65,8 @@ namespace MagicTavern.BezierWall.Editor
 
             mesh.vertices = vertices;
             mesh.colors32 = colors;
+            if (textureFaces != null)
+                mesh.SetUVs(2, textureFaces);
             mesh.triangles = visibleIndices;
             mesh.RecalculateBounds();
             mesh.RecalculateNormals();

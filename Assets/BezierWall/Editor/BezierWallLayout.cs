@@ -42,6 +42,8 @@ namespace MagicTavern.BezierWall.Editor
         public Color TopColor = new Color32(255, 218, 147, 255);
         public Color SideColor = new Color32(214, 139, 92, 255);
         public Object SurfaceTexture = null;
+        public bool UseSeparateTopTexture = false;
+        public Object TopTexture = null;
         public Material Material = null;
         public Vector2 TileSize = Vector2.one;
 
