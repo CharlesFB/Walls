@@ -1034,6 +1034,7 @@ GameObject:
   - component: {fileID: 1065650739}
   - component: {fileID: 1065650738}
   - component: {fileID: 1065650737}
+  - component: {fileID: 1065650741}
   m_Layer: 0
   m_Name: Rounded Terrace Wall
   m_TagString: Untagged
@@ -1344,6 +1345,34 @@ Transform:
   - {fileID: 497081627}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1065650741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1065650736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff2c876edbe141d191808ec6099600ad, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  DraftGuid: 32e5380ebbaad4870af936bc499037a0
+  GeneratedMesh: {fileID: 4300000, guid: f67e2906967ad4ae79aa18b849befa1f, type: 2}
+  GeneratedMaterial: {fileID: -9012677065145498798, guid: f67e2906967ad4ae79aa18b849befa1f, type: 2}
+  LastAppliedMaterial: {fileID: -9012677065145498798, guid: f67e2906967ad4ae79aa18b849befa1f, type: 2}
+  GeneratedCollider: {fileID: 1065650737}
+  DecorationsRoot: {fileID: 497081627}
+  GeneratedDecorations:
+  - {fileID: 813454273}
+  - {fileID: 634831570}
+  - {fileID: 408856696}
+  - {fileID: 1451192773}
+  - {fileID: 2007782017}
+  - {fileID: 789726435}
+  - {fileID: 109649112}
+  - {fileID: 1443823496}
+  - {fileID: 697187595}
 --- !u!1 &1140001445
 GameObject:
   m_ObjectHideFlags: 0

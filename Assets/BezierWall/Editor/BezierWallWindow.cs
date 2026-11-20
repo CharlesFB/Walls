@@ -86,6 +86,11 @@ namespace MagicTavern.BezierWall.Editor
             previewRenderer = null;
         }
 
+        private void OnSelectionChange()
+        {
+            Repaint();
+        }
+
         private void OnUndo()
         {
             selected = selected < settings.Anchors.Count ? selected : -1;
@@ -154,6 +159,7 @@ namespace MagicTavern.BezierWall.Editor
                 }
             }
 
+            DrawWallBinding();
             DrawStyleSettings();
 
             serializedWindow.Update();
@@ -249,6 +255,36 @@ namespace MagicTavern.BezierWall.Editor
             EditorGUILayout.Space(7f);
         }
 
+        private void DrawWallBinding()
+        {
+            GameObject wall = Selection.activeGameObject;
+            if (wall == null || !wall.scene.IsValid() || wall.GetComponent<MeshFilter>() == null
+                || wall.GetComponent<MeshRenderer>() == null)
+                return;
+
+            EditorGUILayout.Space(6f);
+            GUILayout.Label("选中墙体", EditorStyles.boldLabel);
+            BezierWallLayout linked = BezierWallBakeBindings.GetDraft(wall);
+            if (linked != null)
+            {
+                EditorGUILayout.LabelField("关联草稿", linked.name);
+                if (currentDraft != linked && GUILayout.Button("打开关联草稿"))
+                    LoadDraft(linked);
+                return;
+            }
+
+            using (new EditorGUI.DisabledScope(currentDraft == null))
+            {
+                if (GUILayout.Button("关联选中墙"))
+                {
+                    if (BezierWallBakeBindings.TryAssociate(wall, currentDraft, currentDraft.Settings, out string error))
+                        Notify("已关联草稿。保存场景后可从墙体重新打开。");
+                    else
+                        Notify(error);
+                }
+            }
+        }
+
         private void DrawStyleSettings()
         {
             EditorGUILayout.Space(6f);
@@ -261,11 +297,7 @@ namespace MagicTavern.BezierWall.Editor
                 using (new EditorGUI.DisabledScope(stylePreset == null || stylePreset.Style == null))
                 {
                     if (GUILayout.Button("套用预设"))
-                    {
-                        Undo.RecordObject(this, "套用墙体样式");
-                        stylePreset.Style.ApplyTo(settings);
-                        InvalidatePreviews();
-                    }
+                        ApplyStylePreset();
                 }
 
                 if (GUILayout.Button("另存预设"))
@@ -282,6 +314,27 @@ namespace MagicTavern.BezierWall.Editor
                     }
                 }
             }
+        }
+
+        private void ApplyStylePreset()
+        {
+            BezierWallSettings candidate = settings.Copy();
+            stylePreset.Style.ApplyTo(candidate);
+            if (candidate.Anchors.Count >= (candidate.Closed ? 3 : 2))
+            {
+                if (!BezierWallDecorations.TryPlan(candidate, out _, out string error)
+                    || !BezierWallAssets.TryBuild(candidate, out Mesh mesh, out _, out error))
+                {
+                    Notify($"无法套用样式。{error}");
+                    return;
+                }
+
+                DestroyImmediate(mesh);
+            }
+
+            Undo.RecordObject(this, "套用墙体样式");
+            stylePreset.Style.ApplyTo(settings);
+            InvalidatePreviews();
         }
 
         private void SaveStylePreset()
@@ -438,6 +491,16 @@ namespace MagicTavern.BezierWall.Editor
 
                 using (new EditorGUI.DisabledScope(settings.Anchors.Count < 2))
                 {
+                    GameObject wall = Selection.activeGameObject;
+                    if (currentDraft != null && BezierWallBakeBindings.GetDraft(wall) == currentDraft
+                        && GUILayout.Button("更新选中墙", GUILayout.Height(26f)))
+                    {
+                        if (BezierWallBakeUpdates.TryUpdate(wall, currentDraft, settings, out string error))
+                            Notify("已更新场景里的原墙。");
+                        else
+                            Notify(error);
+                    }
+
                     if (GUILayout.Button("烘焙到场景", GUILayout.Height(26f)))
                         Bake();
                 }
@@ -883,7 +946,15 @@ namespace MagicTavern.BezierWall.Editor
             if (BezierWallAssets.TryBake(settings, path, Path.GetFileNameWithoutExtension(path), out GameObject wall, out string error))
             {
                 Selection.activeGameObject = wall;
-                Notify("弧形墙已烘焙到当前场景。");
+                if (currentDraft != null && !string.IsNullOrEmpty(wall.scene.path))
+                {
+                    if (BezierWallBakeBindings.TryAssociate(wall, currentDraft, settings, out string associationError))
+                        Notify("弧形墙已烘焙并关联草稿。");
+                    else
+                        Notify($"墙体已烘焙。{associationError}");
+                }
+                else
+                    Notify("弧形墙已烘焙到当前场景。");
             }
             else
                 Notify(error);

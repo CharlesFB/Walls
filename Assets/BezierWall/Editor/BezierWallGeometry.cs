@@ -191,7 +191,7 @@ namespace MagicTavern.BezierWall.Editor
                     if (Vector2.Dot(section.Positive - previousSection.Positive, incomingDirection) <= 0f
                         || Vector2.Dot(section.Negative - previousSection.Negative, incomingDirection) <= 0f)
                     {
-                        error = "当前墙厚使弯道内侧折叠，请减小墙厚或放宽弧度。";
+                        error = $"墙线在距墙段起点约 {distance + incoming.magnitude:G5} 单位处内侧折叠。请减小墙厚或放宽弧度。";
                         return false;
                     }
 
@@ -502,6 +502,7 @@ namespace MagicTavern.BezierWall.Editor
             var corners = new (float Turn, float SetbackFactor, int Steps)[anchors.Count];
             int sampleCount = closed ? anchors.Count + 1 : anchors.Count;
             float minimumRadius = 0f;
+            int thicknessLimitCorner = 0;
             int firstCorner = closed ? 0 : 1;
             int lastCorner = closed ? anchors.Count - 1 : anchors.Count - 2;
             for (int i = firstCorner; i <= lastCorner; i++)
@@ -531,7 +532,11 @@ namespace MagicTavern.BezierWall.Editor
                 corners[i] = (turn, Mathf.Tan(absTurn * 0.5f), steps);
                 // The mesh offsets each chord by half the wall thickness on the inside of the arc.
                 float minimumForCorner = (thickness * 0.5f + PointEpsilon) / Mathf.Cos(absTurn / (2f * steps));
-                minimumRadius = Mathf.Max(minimumRadius, minimumForCorner);
+                if (minimumForCorner > minimumRadius)
+                {
+                    minimumRadius = minimumForCorner;
+                    thicknessLimitCorner = i + 1;
+                }
             }
 
             if (sampleCount > MaxSampleCount)
@@ -557,7 +562,7 @@ namespace MagicTavern.BezierWall.Editor
 
             if (minimumRadius > 0f && radius <= minimumRadius)
             {
-                error = $"圆角半径需要大于 {minimumRadius:G5} 才能容纳当前墙厚。请放大圆角或减小墙厚。";
+                error = $"第 {thicknessLimitCorner} 个描点的圆角半径需要大于 {minimumRadius:G5} 才能容纳当前墙厚。请放大圆角或减小墙厚。";
                 return false;
             }
 

@@ -176,11 +176,11 @@ namespace MagicTavern.BezierWall.Editor
             renderer.receiveShadows = false;
         }
 
-        internal static void AddDecorations(BezierWallSettings settings,
+        internal static Transform AddDecorations(BezierWallSettings settings,
             IReadOnlyList<BezierWallDecorationPlacement> placements, Transform wall)
         {
             if (placements.Count == 0)
-                return;
+                return null;
 
             GameObject container = EditorUtility.CreateGameObjectWithHideFlags("沿墙摆件", wall.gameObject.hideFlags);
             container.transform.SetParent(wall, false);
@@ -200,6 +200,8 @@ namespace MagicTavern.BezierWall.Editor
                 group.sortingLayerID = settings.SortingLayer;
                 group.sortingOrder = sortingOrder;
             }
+
+            return container.transform;
         }
 
         internal static BezierWallLayout SaveLayout(BezierWallSettings settings, string path)
