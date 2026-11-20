@@ -30,6 +30,10 @@ namespace MagicTavern.BezierWall.Editor
         public float OpeningPosition = 0.5f;
         public float OpeningWidth = 1f;
 
+        public GameObject DecorationPrefab = null;
+        public float DecorationSpacing = 1.25f;
+        public float DecorationClearance = 0.3f;
+
         public float Height = 0.55f;
         public float Thickness = 0.14f;
         public float Lean = 0.12f;

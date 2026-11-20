@@ -1,6 +1,9 @@
+using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 
 namespace MagicTavern.BezierWall.Editor
@@ -98,7 +101,8 @@ namespace MagicTavern.BezierWall.Editor
                 return false;
             }
 
-            if (!TryBuild(settings, out Mesh mesh, out Vector2[][] footprints, out error))
+            if (!BezierWallDecorations.TryPlan(settings, out IReadOnlyList<BezierWallDecorationPlacement> placements, out error)
+                || !TryBuild(settings, out Mesh mesh, out Vector2[][] footprints, out error))
                 return false;
 
             Material generated = settings.Material == null ? CreateCartoonMaterial(settings) : null;
@@ -109,22 +113,12 @@ namespace MagicTavern.BezierWall.Editor
                 return false;
             }
 
-            mesh.name = objectName;
-            AssetDatabase.CreateAsset(mesh, path);
-            if (generated != null)
-                AssetDatabase.AddObjectToAsset(generated, mesh);
-            AssetDatabase.SaveAssets();
-
             wall = new GameObject(objectName, typeof(MeshFilter), typeof(MeshRenderer));
             StageUtility.PlaceGameObjectInCurrentStage(wall);
             wall.transform.position = settings.Origin;
             wall.GetComponent<MeshFilter>().sharedMesh = mesh;
-            var renderer = wall.GetComponent<MeshRenderer>();
-            renderer.sharedMaterial = settings.Material != null ? settings.Material : generated;
-            renderer.sortingLayerID = settings.SortingLayer;
-            renderer.sortingOrder = settings.SortingOrder;
-            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
+            ConfigureWallRenderer(settings, wall.GetComponent<MeshRenderer>(),
+                settings.Material != null ? settings.Material : generated);
 
             if (settings.AddCollider)
             {
@@ -134,9 +128,65 @@ namespace MagicTavern.BezierWall.Editor
                     collider.SetPath(i, footprints[i]);
             }
 
+            try
+            {
+                AddDecorations(settings, placements, wall.transform);
+            }
+            catch (Exception exception)
+            {
+                Object.DestroyImmediate(wall);
+                Object.DestroyImmediate(mesh);
+                if (generated != null)
+                    Object.DestroyImmediate(generated);
+                wall = null;
+                error = $"无法实例化沿墙摆件。{exception.Message}";
+                return false;
+            }
+
+            mesh.name = objectName;
+            AssetDatabase.CreateAsset(mesh, path);
+            if (generated != null)
+                AssetDatabase.AddObjectToAsset(generated, mesh);
+            AssetDatabase.SaveAssets();
+
             Undo.RegisterCreatedObjectUndo(wall, "创建 2D 弧形墙");
             EditorSceneManager.MarkSceneDirty(wall.scene);
             return true;
+        }
+
+        internal static void ConfigureWallRenderer(BezierWallSettings settings, MeshRenderer renderer, Material material)
+        {
+            renderer.sharedMaterial = material;
+            renderer.sortingLayerID = settings.SortingLayer;
+            renderer.sortingOrder = settings.SortingOrder;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+        }
+
+        internal static void AddDecorations(BezierWallSettings settings,
+            IReadOnlyList<BezierWallDecorationPlacement> placements, Transform wall)
+        {
+            if (placements.Count == 0)
+                return;
+
+            GameObject container = EditorUtility.CreateGameObjectWithHideFlags("沿墙摆件", wall.gameObject.hideFlags);
+            container.transform.SetParent(wall, false);
+
+            int sortingOrder = Mathf.Clamp(settings.SortingOrder, short.MinValue, short.MaxValue - 1) + 1;
+            foreach (BezierWallDecorationPlacement placement in placements)
+            {
+                var instance = PrefabUtility.InstantiatePrefab(settings.DecorationPrefab, container.transform) as GameObject;
+                if (instance == null)
+                    throw new InvalidOperationException("所选 Prefab 无法实例化。");
+
+                instance.transform.localPosition = placement.Position;
+                instance.transform.localRotation = Quaternion.Euler(0f, 0f, placement.Angle);
+                if (!instance.TryGetComponent(out SortingGroup group))
+                    group = instance.AddComponent<SortingGroup>();
+
+                group.sortingLayerID = settings.SortingLayer;
+                group.sortingOrder = sortingOrder;
+            }
         }
 
         internal static BezierWallLayout SaveLayout(BezierWallSettings settings, string path)

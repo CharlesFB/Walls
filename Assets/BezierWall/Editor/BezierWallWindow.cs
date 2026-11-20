@@ -3,6 +3,7 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 
 namespace MagicTavern.BezierWall.Editor
@@ -13,6 +14,7 @@ namespace MagicTavern.BezierWall.Editor
         private static readonly Color GridColor = new Color(1f, 1f, 1f, 0.08f);
         private static readonly Color CurveColor = new Color32(115, 232, 200, 255);
         private static readonly Color HandleColor = new Color32(255, 202, 117, 255);
+        private static readonly Color DecorationColor = new Color32(202, 178, 255, 255);
         private static readonly string[] Tabs = { "描点", "成品预览" };
 
         [SerializeField] private BezierWallSettings settings = new BezierWallSettings();
@@ -31,11 +33,14 @@ namespace MagicTavern.BezierWall.Editor
         private bool traceDirty = true;
         private List<Vector2> tracePath;
         private List<Vector2> traceAfterOpening;
+        private IReadOnlyList<BezierWallDecorationPlacement> traceDecorations;
         private string traceError;
         private bool previewDirty = true;
         private string previewError;
         private Mesh previewMesh;
         private Material previewMaterial;
+        private GameObject previewRoot;
+        private Bounds previewBounds;
         private PreviewRenderUtility previewRenderer;
 
         private enum DragMode { None, Pan, Anchor, Incoming, Outgoing }
@@ -184,6 +189,8 @@ namespace MagicTavern.BezierWall.Editor
 
             EditorGUILayout.PropertyField(material, new GUIContent("自定义材质"));
 
+            DrawDecorationSettings(data);
+
             EditorGUILayout.Space(6f);
             GUILayout.Label("场景输出", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(data.FindPropertyRelative(nameof(settings.Origin)), new GUIContent("场景位置"));
@@ -240,6 +247,27 @@ namespace MagicTavern.BezierWall.Editor
 
             EditorGUILayout.PropertyField(data.FindPropertyRelative(nameof(BezierWallSettings.OpeningWidth)),
                 new GUIContent("门洞宽度", "门洞沿墙脚路径的长度，单位为 Unity 单位。"));
+        }
+
+        private void DrawDecorationSettings(SerializedProperty data)
+        {
+            EditorGUILayout.Space(6f);
+            GUILayout.Label("沿墙摆件", EditorStyles.boldLabel);
+            SerializedProperty prefab = data.FindPropertyRelative(nameof(BezierWallSettings.DecorationPrefab));
+            var selectedPrefab = (GameObject)EditorGUILayout.ObjectField("柱子 / 灯笼 Prefab",
+                prefab.objectReferenceValue, typeof(GameObject), false);
+            if (BezierWallDecorations.IsPrefabAsset(selectedPrefab))
+                prefab.objectReferenceValue = selectedPrefab;
+            else if (selectedPrefab != prefab.objectReferenceValue)
+                Notify("请选择项目里的 Prefab 根资产。");
+
+            if (prefab.objectReferenceValue == null)
+                return;
+
+            EditorGUILayout.PropertyField(data.FindPropertyRelative(nameof(BezierWallSettings.DecorationSpacing)),
+                new GUIContent("摆件间距", "沿墙脚中心线按 Unity 单位等距摆放，第一个位置距起点半个间距。"));
+            EditorGUILayout.PropertyField(data.FindPropertyRelative(nameof(BezierWallSettings.DecorationClearance)),
+                new GUIContent("摆件占地半径", "从 Prefab 根节点量到图像或碰撞最远边缘的 XY 距离，用于给门洞留空。"));
         }
 
         private void DrawImageField(SerializedProperty property, string name, string label)
@@ -370,12 +398,14 @@ namespace MagicTavern.BezierWall.Editor
                 traceDirty = false;
                 tracePath = null;
                 traceAfterOpening = null;
+                traceDecorations = null;
                 traceError = null;
                 if (settings.Anchors.Count >= 2
                     && BezierWallGeometry.TrySamplePath(settings, out List<Vector2> sampled, out traceError))
                 {
-                    BezierWallGeometry.TrySplitOpening(settings, sampled,
-                        out tracePath, out traceAfterOpening, out _, out traceError);
+                    if (BezierWallGeometry.TrySplitOpening(settings, sampled,
+                        out tracePath, out traceAfterOpening, out _, out traceError))
+                        BezierWallDecorations.TryPlan(settings, out traceDecorations, out traceError);
                 }
             }
 
@@ -388,6 +418,18 @@ namespace MagicTavern.BezierWall.Editor
                 DrawTraceRun(traceAfterOpening, areaSize);
                 DrawDot(ToScreen(tracePath[tracePath.Count - 1], areaSize), 4f, HandleColor);
                 DrawDot(ToScreen(traceAfterOpening[0], areaSize), 4f, HandleColor);
+            }
+
+            if (traceDecorations == null)
+                return;
+
+            foreach (BezierWallDecorationPlacement placement in traceDecorations)
+            {
+                Vector2 position = ToScreen(placement.Position, areaSize);
+                float radians = placement.Angle * Mathf.Deg2Rad;
+                var direction = new Vector2(Mathf.Cos(radians), -Mathf.Sin(radians));
+                DrawDot(position, 4f, DecorationColor);
+                Handles.DrawLine(position, position + direction * 11f);
             }
         }
 
@@ -452,12 +494,15 @@ namespace MagicTavern.BezierWall.Editor
             camera.orthographic = true;
             camera.orthographicSize = area.height / (scale * 2f);
             camera.nearClipPlane = 0.01f;
-            camera.farClipPlane = 20f + previewMesh.bounds.size.z;
-            camera.transform.SetPositionAndRotation(new Vector3(viewportCenter.x, viewportCenter.y, previewMesh.bounds.min.z - 10f),
+            camera.farClipPlane = 20f + previewBounds.size.z;
+            camera.transform.SetPositionAndRotation(new Vector3(viewportCenter.x, viewportCenter.y, previewBounds.min.z - 10f),
                 Quaternion.identity);
 
             previewRenderer.BeginPreview(area, GUIStyle.none);
-            previewRenderer.DrawMesh(previewMesh, Matrix4x4.identity, material, 0);
+            if (previewRoot == null)
+                previewRenderer.DrawMesh(previewMesh, Matrix4x4.identity, material, 0);
+            else
+                SortingGroup.UpdateAllSortingGroups();
             previewRenderer.Render(allowScriptableRenderPipeline: true, updatefov: false);
             previewRenderer.EndAndDrawPreview(area);
         }
@@ -700,17 +745,55 @@ namespace MagicTavern.BezierWall.Editor
 
             previewDirty = false;
             ReleasePreview();
-            if (BezierWallAssets.TryBuild(settings, out previewMesh, out _, out previewError) && settings.Material == null)
+            if (!BezierWallDecorations.TryPlan(settings, out IReadOnlyList<BezierWallDecorationPlacement> placements, out previewError)
+                || !BezierWallAssets.TryBuild(settings, out previewMesh, out _, out previewError))
+                return;
+
+            if (settings.Material == null)
                 previewMaterial = BezierWallAssets.CreateCartoonMaterial(settings);
+
+            previewBounds = previewMesh.bounds;
+            Material material = settings.Material != null ? settings.Material : previewMaterial;
+            if (material == null || placements.Count == 0)
+                return;
+
+            if (previewRenderer == null)
+                previewRenderer = new PreviewRenderUtility();
+
+            previewRoot = EditorUtility.CreateGameObjectWithHideFlags("弧形墙预览", HideFlags.HideAndDontSave,
+                typeof(MeshFilter), typeof(MeshRenderer));
+            previewRenderer.AddSingleGO(previewRoot);
+            previewRoot.GetComponent<MeshFilter>().sharedMesh = previewMesh;
+            BezierWallAssets.ConfigureWallRenderer(settings, previewRoot.GetComponent<MeshRenderer>(), material);
+
+            try
+            {
+                BezierWallAssets.AddDecorations(settings, placements, previewRoot.transform);
+            }
+            catch (System.Exception exception)
+            {
+                ReleasePreview();
+                previewError = $"无法预览沿墙摆件。{exception.Message}";
+                return;
+            }
+
+            foreach (Renderer renderer in previewRoot.GetComponentsInChildren<Renderer>())
+            {
+                if (renderer.enabled)
+                    previewBounds.Encapsulate(renderer.bounds);
+            }
         }
 
         private void ReleasePreview()
         {
+            if (previewRoot != null)
+                DestroyImmediate(previewRoot);
             if (previewMesh != null)
                 DestroyImmediate(previewMesh);
             if (previewMaterial != null)
                 DestroyImmediate(previewMaterial);
 
+            previewRoot = null;
             previewMesh = null;
             previewMaterial = null;
         }
@@ -737,7 +820,7 @@ namespace MagicTavern.BezierWall.Editor
                 EnsurePreview();
                 if (previewMesh != null)
                 {
-                    bounds = previewMesh.bounds;
+                    bounds = previewBounds;
                     found = true;
                 }
             }

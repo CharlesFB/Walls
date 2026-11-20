@@ -122,6 +122,538 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1001 &109649110
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 497081627}
+    m_Modifications:
+    - target: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_Name
+      value: Terrace Brass Lantern
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.9035342
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.38
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 109649113}
+  m_SourcePrefab: {fileID: 100100000, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+--- !u!4 &109649111 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 109649110}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &109649112 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 109649110}
+  m_PrefabAsset: {fileID: 0}
+--- !u!210 &109649113
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 109649112}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 6
+  m_SortAtRoot: 0
+--- !u!1001 &408856694
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 497081627}
+    m_Modifications:
+    - target: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_Name
+      value: Terrace Brass Lantern
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -3.5675948
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.4584471
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.8860933
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.46350688
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 408856697}
+  m_SourcePrefab: {fileID: 100100000, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+--- !u!4 &408856695 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 408856694}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &408856696 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 408856694}
+  m_PrefabAsset: {fileID: 0}
+--- !u!210 &408856697
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 408856696}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 6
+  m_SortAtRoot: 0
+--- !u!1 &497081626
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 497081627}
+  m_Layer: 0
+  m_Name: "\u6CBF\u5899\u6446\u4EF6"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &497081627
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 497081626}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 813454272}
+  - {fileID: 634831569}
+  - {fileID: 408856695}
+  - {fileID: 1451192772}
+  - {fileID: 2007782016}
+  - {fileID: 789726434}
+  - {fileID: 109649111}
+  - {fileID: 1443823495}
+  - {fileID: 697187594}
+  m_Father: {fileID: 1065650740}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &634831568
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 497081627}
+    m_Modifications:
+    - target: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_Name
+      value: Terrace Brass Lantern
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -3.65
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.40500012
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 634831571}
+  m_SourcePrefab: {fileID: 100100000, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+--- !u!4 &634831569 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 634831568}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &634831570 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 634831568}
+  m_PrefabAsset: {fileID: 0}
+--- !u!210 &634831571
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 634831570}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 6
+  m_SortAtRoot: 0
+--- !u!1001 &697187593
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 497081627}
+    m_Modifications:
+    - target: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_Name
+      value: Terrace Brass Lantern
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2.98
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.88971233
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 697187596}
+  m_SourcePrefab: {fileID: 100100000, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+--- !u!4 &697187594 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 697187593}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &697187595 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 697187593}
+  m_PrefabAsset: {fileID: 0}
+--- !u!210 &697187596
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 697187595}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 6
+  m_SortAtRoot: 0
+--- !u!1001 &789726433
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 497081627}
+    m_Modifications:
+    - target: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_Name
+      value: Terrace Brass Lantern
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.8335342
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.38
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 789726436}
+  m_SourcePrefab: {fileID: 100100000, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+--- !u!4 &789726434 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 789726433}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &789726435 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 789726433}
+  m_PrefabAsset: {fileID: 0}
+--- !u!210 &789726436
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 789726435}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 6
+  m_SortAtRoot: 0
+--- !u!1001 &813454271
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 497081627}
+    m_Modifications:
+    - target: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_Name
+      value: Terrace Brass Lantern
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -3.65
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.66499996
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 813454274}
+  m_SourcePrefab: {fileID: 100100000, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+--- !u!4 &813454272 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 813454271}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &813454273 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 813454271}
+  m_PrefabAsset: {fileID: 0}
+--- !u!210 &813454274
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 813454273}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 6
+  m_SortAtRoot: 0
 --- !u!1 &1023037335
 GameObject:
   m_ObjectHideFlags: 0
@@ -524,7 +1056,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 497081627}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1140001445
@@ -610,6 +1143,252 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1443823494
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 497081627}
+    m_Modifications:
+    - target: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_Name
+      value: Terrace Brass Lantern
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2.9002824
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.16457629
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.8860939
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.46350574
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1443823497}
+  m_SourcePrefab: {fileID: 100100000, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+--- !u!4 &1443823495 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 1443823494}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1443823496 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 1443823494}
+  m_PrefabAsset: {fileID: 0}
+--- !u!210 &1443823497
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1443823496}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 6
+  m_SortAtRoot: 0
+--- !u!1001 &1451192771
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 497081627}
+    m_Modifications:
+    - target: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_Name
+      value: Terrace Brass Lantern
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.4288218
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.67
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1451192774}
+  m_SourcePrefab: {fileID: 100100000, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+--- !u!4 &1451192772 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 1451192771}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1451192773 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 1451192771}
+  m_PrefabAsset: {fileID: 0}
+--- !u!210 &1451192774
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1451192773}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 6
+  m_SortAtRoot: 0
+--- !u!1001 &2007782015
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 497081627}
+    m_Modifications:
+    - target: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_Name
+      value: Terrace Brass Lantern
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.9726438
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2007782018}
+  m_SourcePrefab: {fileID: 100100000, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+--- !u!4 &2007782016 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7466011506042287728, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 2007782015}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2007782017 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2568192512403461526, guid: 63d80f1c16b844fe18a1fc191c2c78dd, type: 3}
+  m_PrefabInstance: {fileID: 2007782015}
+  m_PrefabAsset: {fileID: 0}
+--- !u!210 &2007782018
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2007782017}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 6
+  m_SortAtRoot: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
