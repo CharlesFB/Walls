@@ -10,6 +10,12 @@ namespace MagicTavern.BezierWall.Editor
         [SerializeField] internal BezierWallSettings Settings = new BezierWallSettings();
     }
 
+    internal enum WallPathMode
+    {
+        [InspectorName("贝塞尔曲线")] Bezier = 0,
+        [InspectorName("圆角直线")] RoundedPolyline = 1
+    }
+
     [Serializable]
     internal sealed class BezierWallSettings
     {
@@ -17,6 +23,9 @@ namespace MagicTavern.BezierWall.Editor
         public Vector2 ReferenceCenter = Vector2.zero;
         public float ReferenceWidth = 10f;
         public float ReferenceOpacity = 0.7f;
+
+        public WallPathMode PathMode = WallPathMode.Bezier;
+        public float CornerRadius = 0.3f;
 
         public float Height = 0.55f;
         public float Thickness = 0.14f;

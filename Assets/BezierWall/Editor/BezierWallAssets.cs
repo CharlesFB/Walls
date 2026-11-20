@@ -58,9 +58,7 @@ namespace MagicTavern.BezierWall.Editor
                 return false;
             }
 
-            BezierWallGeometry.UpdateAutomaticTangents(settings.Anchors);
-            if (!BezierWallGeometry.TryBuild(settings.Anchors, settings.Height, settings.Thickness,
-                    settings.Subdivisions, settings.TileSize, out mesh, out error, out footprint))
+            if (!BezierWallGeometry.TryBuild(settings, out mesh, out error, out footprint))
                 return false;
 
             BezierWallProjection.Apply(mesh, settings.Lean, settings.TopColor, settings.SideColor);

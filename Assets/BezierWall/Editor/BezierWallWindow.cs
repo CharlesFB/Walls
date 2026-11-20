@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEditor.Callbacks;
@@ -27,6 +28,9 @@ namespace MagicTavern.BezierWall.Editor
         private int dragGroup = -1;
         private DragMode dragMode;
         private bool frameRequested = true;
+        private bool traceDirty = true;
+        private List<Vector2> tracePath;
+        private string traceError;
         private bool previewDirty = true;
         private string previewError;
         private Mesh previewMesh;
@@ -34,6 +38,8 @@ namespace MagicTavern.BezierWall.Editor
         private PreviewRenderUtility previewRenderer;
 
         private enum DragMode { None, Pan, Anchor, Incoming, Outgoing }
+
+        private bool UsesBezier => settings.PathMode == WallPathMode.Bezier;
 
         [MenuItem("Tools/2D 弧形墙编辑器")]
         private static void Open()
@@ -71,8 +77,7 @@ namespace MagicTavern.BezierWall.Editor
         private void OnUndo()
         {
             selected = selected < settings.Anchors.Count ? selected : -1;
-            previewDirty = true;
-            Repaint();
+            OnShapeChanged();
         }
 
         private void OnGUI()
@@ -148,11 +153,24 @@ namespace MagicTavern.BezierWall.Editor
             EditorGUILayout.Slider(data.FindPropertyRelative(nameof(settings.ReferenceOpacity)), 0f, 1f, new GUIContent("不透明度"));
 
             EditorGUILayout.Space(6f);
+            GUILayout.Label("墙线路径", EditorStyles.boldLabel);
+            SerializedProperty mode = data.FindPropertyRelative(nameof(settings.PathMode));
+            EditorGUILayout.PropertyField(mode, new GUIContent("路径类型"));
+            bool rounded = mode.enumValueIndex == (int)WallPathMode.RoundedPolyline;
+            if (rounded)
+            {
+                EditorGUILayout.PropertyField(data.FindPropertyRelative(nameof(settings.CornerRadius)),
+                    new GUIContent("圆角半径", "沿墙脚中心线度量，单位为 Unity 单位。0 使用折角。"));
+            }
+
+            EditorGUILayout.IntSlider(data.FindPropertyRelative(nameof(settings.Subdivisions)), 4, 48,
+                new GUIContent(rounded ? "每 90° 弧段细分" : "每段曲线细分"));
+
+            EditorGUILayout.Space(6f);
             GUILayout.Label("薄墙外观", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(data.FindPropertyRelative(nameof(settings.Height)), new GUIContent("墙顶抬高"));
             EditorGUILayout.PropertyField(data.FindPropertyRelative(nameof(settings.Thickness)), new GUIContent("墙厚"));
             EditorGUILayout.Slider(data.FindPropertyRelative(nameof(settings.Lean)), -0.65f, 0.65f, new GUIContent("墙顶偏移比例"));
-            EditorGUILayout.IntSlider(data.FindPropertyRelative(nameof(settings.Subdivisions)), 4, 48, new GUIContent("每段细分"));
             EditorGUILayout.PropertyField(data.FindPropertyRelative(nameof(settings.TopColor)), new GUIContent("顶面色"));
             EditorGUILayout.PropertyField(data.FindPropertyRelative(nameof(settings.SideColor)), new GUIContent("侧面色"));
             var material = data.FindPropertyRelative(nameof(settings.Material));
@@ -177,14 +195,17 @@ namespace MagicTavern.BezierWall.Editor
                 GUILayout.Label("选中描点", EditorStyles.boldLabel);
                 SerializedProperty point = data.FindPropertyRelative(nameof(settings.Anchors)).GetArrayElementAtIndex(selected);
                 EditorGUILayout.PropertyField(point.FindPropertyRelative(nameof(BezierWallAnchor.Position)), new GUIContent("位置"));
-                var automatic = point.FindPropertyRelative(nameof(BezierWallAnchor.Automatic));
-                EditorGUILayout.PropertyField(automatic, new GUIContent("自动切线"));
-                if (!automatic.boolValue)
+                if (!rounded)
                 {
-                    if (selected > 0)
-                        EditorGUILayout.PropertyField(point.FindPropertyRelative(nameof(BezierWallAnchor.Incoming)), new GUIContent("入控制柄偏移"));
-                    if (selected < settings.Anchors.Count - 1)
-                        EditorGUILayout.PropertyField(point.FindPropertyRelative(nameof(BezierWallAnchor.Outgoing)), new GUIContent("出控制柄偏移"));
+                    var automatic = point.FindPropertyRelative(nameof(BezierWallAnchor.Automatic));
+                    EditorGUILayout.PropertyField(automatic, new GUIContent("自动切线"));
+                    if (!automatic.boolValue)
+                    {
+                        if (selected > 0)
+                            EditorGUILayout.PropertyField(point.FindPropertyRelative(nameof(BezierWallAnchor.Incoming)), new GUIContent("入控制柄偏移"));
+                        if (selected < settings.Anchors.Count - 1)
+                            EditorGUILayout.PropertyField(point.FindPropertyRelative(nameof(BezierWallAnchor.Outgoing)), new GUIContent("出控制柄偏移"));
+                    }
                 }
             }
 
@@ -287,19 +308,9 @@ namespace MagicTavern.BezierWall.Editor
 
             Handles.BeginGUI();
             DrawGrid(area);
-            for (int i = 0; i + 1 < settings.Anchors.Count; i++)
-            {
-                BezierWallAnchor a = settings.Anchors[i];
-                BezierWallAnchor b = settings.Anchors[i + 1];
-                Vector2 start = ToScreen(a.Position, area.size);
-                Vector2 end = ToScreen(b.Position, area.size);
-                Vector2 startTangent = ToScreen(a.Position + a.Outgoing, area.size);
-                Vector2 endTangent = ToScreen(b.Position + b.Incoming, area.size);
-                Handles.DrawBezier(start, end, startTangent, endTangent, CanvasColor, null, 6f);
-                Handles.DrawBezier(start, end, startTangent, endTangent, CurveColor, null, 2.5f);
-            }
+            DrawTracePath(area.size);
 
-            if (selected >= 0 && selected < settings.Anchors.Count)
+            if (UsesBezier && selected >= 0 && selected < settings.Anchors.Count)
             {
                 BezierWallAnchor anchor = settings.Anchors[selected];
                 if (selected > 0)
@@ -315,8 +326,45 @@ namespace MagicTavern.BezierWall.Editor
             }
 
             Handles.EndGUI();
-            if (settings.Anchors.Count == 0)
+            if (traceError != null)
+                DrawCanvasHint(traceError, area);
+            else if (settings.Anchors.Count == 0)
                 DrawCanvasHint("沿着墙脚轮廓点击放置描点。放置两个以上描点后即可预览。", area);
+        }
+
+        private void DrawTracePath(Vector2 areaSize)
+        {
+            if (!UsesBezier)
+            {
+                Handles.color = new Color(0.86f, 0.92f, 0.92f, 0.55f);
+                for (int i = 1; i < settings.Anchors.Count; i++)
+                {
+                    Handles.DrawDottedLine(ToScreen(settings.Anchors[i - 1].Position, areaSize),
+                        ToScreen(settings.Anchors[i].Position, areaSize), 4f);
+                }
+            }
+
+            if (traceDirty)
+            {
+                traceDirty = false;
+                tracePath = null;
+                traceError = null;
+                if (settings.Anchors.Count >= 2
+                    && !BezierWallGeometry.TrySamplePath(settings, out tracePath, out traceError))
+                    tracePath = null;
+            }
+
+            if (tracePath == null)
+                return;
+
+            var points = new Vector3[tracePath.Count];
+            for (int i = 0; i < points.Length; i++)
+                points[i] = ToScreen(tracePath[i], areaSize);
+
+            Handles.color = CanvasColor;
+            Handles.DrawAAPolyLine(6f, points);
+            Handles.color = CurveColor;
+            Handles.DrawAAPolyLine(2.5f, points);
         }
 
         private void DrawGrid(Rect area)
@@ -440,7 +488,7 @@ namespace MagicTavern.BezierWall.Editor
 
         private void BeginTraceDrag(Vector2 mouse, Vector2 size)
         {
-            if (selected >= 0)
+            if (UsesBezier && selected >= 0)
             {
                 BezierWallAnchor anchor = settings.Anchors[selected];
                 if (selected > 0 && NearHandle(mouse, anchor, anchor.Incoming, size))
@@ -602,7 +650,9 @@ namespace MagicTavern.BezierWall.Editor
 
         private void OnShapeChanged()
         {
-            BezierWallGeometry.UpdateAutomaticTangents(settings.Anchors);
+            if (UsesBezier)
+                BezierWallGeometry.UpdateAutomaticTangents(settings.Anchors);
+            traceDirty = true;
             previewDirty = true;
             Repaint();
         }
@@ -673,8 +723,11 @@ namespace MagicTavern.BezierWall.Editor
                     }
 
                     bounds.Encapsulate(anchor.Position);
-                    bounds.Encapsulate(anchor.Position + anchor.Incoming);
-                    bounds.Encapsulate(anchor.Position + anchor.Outgoing);
+                    if (UsesBezier)
+                    {
+                        bounds.Encapsulate(anchor.Position + anchor.Incoming);
+                        bounds.Encapsulate(anchor.Position + anchor.Outgoing);
+                    }
                 }
             }
 

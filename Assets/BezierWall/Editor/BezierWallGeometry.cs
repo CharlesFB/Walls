@@ -22,6 +22,7 @@ namespace MagicTavern.BezierWall.Editor
     internal static class BezierWallGeometry
     {
         private const float PointEpsilon = 0.00001f;
+        private const float TurnEpsilon = 0.0001f;
         private const float MinimumJoinAlignment = 0.25f;
         private const int VerticesPerSection = 8;
         private const int MaxSampleCount = 100000;
@@ -55,36 +56,14 @@ namespace MagicTavern.BezierWall.Editor
                 + t * t * t * second.Position;
         }
 
-        internal static bool TryBuild(
-            IReadOnlyList<BezierWallAnchor> anchors,
-            float height,
-            float thickness,
-            int subdivisions,
-            Vector2 tileSize,
-            out Mesh mesh,
-            out string error)
-        {
-            return TryBuild(anchors, height, thickness, subdivisions, tileSize, out mesh, out error, out _);
-        }
-
-        internal static bool TryBuild(
-            IReadOnlyList<BezierWallAnchor> anchors,
-            float height,
-            float thickness,
-            int subdivisions,
-            Vector2 tileSize,
-            out Mesh mesh,
-            out string error,
-            out Vector2[] footprint)
+        internal static bool TryBuild(BezierWallSettings settings, out Mesh mesh, out string error, out Vector2[] footprint)
         {
             mesh = null;
             error = null;
             footprint = null;
-            if (anchors == null || anchors.Count < 2)
-            {
-                error = "请至少添加两个描点。";
-                return false;
-            }
+            float height = settings.Height;
+            float thickness = settings.Thickness;
+            Vector2 tileSize = settings.TileSize;
 
             if (!IsPositive(height) || !IsPositive(thickness) || !IsPositive(tileSize.x) || !IsPositive(tileSize.y)
                 || !IsFinite(height / tileSize.y) || !IsFinite(thickness / tileSize.x)
@@ -94,13 +73,7 @@ namespace MagicTavern.BezierWall.Editor
                 return false;
             }
 
-            if (subdivisions < 1 || (long)(anchors.Count - 1) * subdivisions >= MaxSampleCount)
-            {
-                error = "细分数无效或曲线采样点过多。";
-                return false;
-            }
-
-            if (!TrySamplePath(anchors, subdivisions, out List<Vector2> path, out error))
+            if (!TrySamplePath(settings, out List<Vector2> path, out error))
                 return false;
 
             int vertexCount = path.Count * VerticesPerSection + 8;
@@ -125,7 +98,7 @@ namespace MagicTavern.BezierWall.Editor
                 float alignment = Vector2.Dot(side, RightOf(incomingDirection));
                 if (alignment < MinimumJoinAlignment)
                 {
-                    error = "墙线转折过急，请调整描点或贝塞尔控制柄。";
+                    error = "墙线转折过急，请调整描点或转角参数。";
                     return false;
                 }
 
@@ -188,21 +161,67 @@ namespace MagicTavern.BezierWall.Editor
             return true;
         }
 
-        private static bool TrySamplePath(
-            IReadOnlyList<BezierWallAnchor> anchors, int subdivisions, out List<Vector2> path, out string error)
+        internal static bool TrySamplePath(BezierWallSettings settings, out List<Vector2> path, out string error)
         {
             path = null;
             error = null;
+            IReadOnlyList<BezierWallAnchor> anchors = settings.Anchors;
+            if (anchors == null || anchors.Count < 2)
+            {
+                error = "请至少添加两个描点。";
+                return false;
+            }
+
+            if (settings.Subdivisions < 1 || settings.Subdivisions >= MaxSampleCount || anchors.Count > MaxSampleCount)
+            {
+                error = "细分数无效或曲线采样点过多。";
+                return false;
+            }
+
             foreach (BezierWallAnchor anchor in anchors)
             {
-                if (anchor == null || !IsFinite(anchor.Position) || !IsFinite(anchor.Incoming) || !IsFinite(anchor.Outgoing))
+                if (anchor == null || !IsFinite(anchor.Position))
                 {
-                    error = "描点和控制柄的坐标必须是有效数值。";
+                    error = "描点坐标必须是有效数值。";
                     return false;
                 }
             }
 
-            path = new List<Vector2>((anchors.Count - 1) * subdivisions + 1) { anchors[0].Position };
+            switch (settings.PathMode)
+            {
+                case WallPathMode.Bezier:
+                    return TrySampleBezier(anchors, settings.Subdivisions, out path, out error);
+                case WallPathMode.RoundedPolyline:
+                    return TrySampleRoundedPolyline(anchors, settings.CornerRadius, settings.Thickness,
+                        settings.Subdivisions, out path, out error);
+                default:
+                    error = "无法识别墙线路径模式。";
+                    return false;
+            }
+        }
+
+        private static bool TrySampleBezier(
+            IReadOnlyList<BezierWallAnchor> anchors, int subdivisions, out List<Vector2> path, out string error)
+        {
+            path = null;
+            error = null;
+            if ((long)(anchors.Count - 1) * subdivisions >= MaxSampleCount)
+            {
+                error = "曲线采样点过多，请减少细分或描点。";
+                return false;
+            }
+
+            UpdateAutomaticTangents(anchors);
+            foreach (BezierWallAnchor anchor in anchors)
+            {
+                if (!IsFinite(anchor.Incoming) || !IsFinite(anchor.Outgoing))
+                {
+                    error = "贝塞尔控制柄的坐标必须是有效数值。";
+                    return false;
+                }
+            }
+
+            var samples = new List<Vector2>((anchors.Count - 1) * subdivisions + 1) { anchors[0].Position };
             for (int i = 1; i < anchors.Count; i++)
             {
                 BezierWallAnchor first = anchors[i - 1];
@@ -210,24 +229,163 @@ namespace MagicTavern.BezierWall.Editor
                 for (int step = 1; step <= subdivisions; step++)
                 {
                     Vector2 point = step == subdivisions ? second.Position : Evaluate(first, second, (float)step / subdivisions);
-                    Vector2 delta = point - path[path.Count - 1];
-                    float squaredDistance = delta.sqrMagnitude;
-                    if (!IsFinite(squaredDistance))
-                    {
-                        error = "描点和控制柄的坐标超出可生成范围。";
+                    if (!TryAppendSample(samples, point, out error))
                         return false;
-                    }
-
-                    if (squaredDistance > PointEpsilon * PointEpsilon)
-                        path.Add(point);
                 }
             }
 
-            if (path.Count >= 2)
-                return true;
+            if (samples.Count < 2)
+            {
+                error = "描点需要形成一条有长度的路径。";
+                return false;
+            }
 
-            error = "描点需要形成一条有长度的路径。";
-            return false;
+            path = samples;
+            return true;
+        }
+
+        private static bool TrySampleRoundedPolyline(IReadOnlyList<BezierWallAnchor> anchors, float radius,
+            float thickness, int subdivisions, out List<Vector2> path, out string error)
+        {
+            path = null;
+            error = null;
+            if (!IsFinite(radius) || radius < 0f)
+            {
+                error = "圆角半径必须是有效的非负数。";
+                return false;
+            }
+
+            var directions = new Vector2[anchors.Count - 1];
+            var lengths = new float[directions.Length];
+            for (int i = 0; i < directions.Length; i++)
+            {
+                Vector2 edge = anchors[i + 1].Position - anchors[i].Position;
+                float length = edge.magnitude;
+                if (!IsFinite(length) || length <= PointEpsilon)
+                {
+                    error = $"第 {i + 1} 段直线长度无效。请拉开相邻描点。";
+                    return false;
+                }
+
+                lengths[i] = length;
+                directions[i] = edge / length;
+            }
+
+            var corners = new (float Turn, float SetbackFactor, int Steps)[anchors.Count];
+            int sampleCount = anchors.Count;
+            float minimumRadius = 0f;
+            for (int i = 1; i < anchors.Count - 1; i++)
+            {
+                Vector2 incoming = directions[i - 1];
+                Vector2 outgoing = directions[i];
+                float cross = incoming.x * outgoing.y - incoming.y * outgoing.x;
+                float turn = Mathf.Atan2(cross, Vector2.Dot(incoming, outgoing));
+                float absTurn = Mathf.Abs(turn);
+                if (absTurn >= Mathf.PI - TurnEpsilon)
+                {
+                    error = $"第 {i + 1} 个描点处的路径掉头。请调整描点位置。";
+                    return false;
+                }
+
+                if (absTurn <= TurnEpsilon || radius == 0f)
+                    continue;
+
+                int steps = Mathf.Max(2, Mathf.CeilToInt(absTurn * subdivisions / (Mathf.PI * 0.5f)));
+                sampleCount += steps;
+                if (sampleCount > MaxSampleCount)
+                {
+                    error = "曲线采样点过多，请减少细分或描点。";
+                    return false;
+                }
+
+                corners[i] = (turn, Mathf.Tan(absTurn * 0.5f), steps);
+                // The mesh offsets each chord by half the wall thickness on the inside of the arc.
+                float minimumForCorner = (thickness * 0.5f + PointEpsilon) / Mathf.Cos(absTurn / (2f * steps));
+                minimumRadius = Mathf.Max(minimumRadius, minimumForCorner);
+            }
+
+            float maximumRadius = float.PositiveInfinity;
+            for (int i = 0; i < lengths.Length; i++)
+            {
+                // Trim both corners of a shared straight segment using one radius.
+                float factor = corners[i].SetbackFactor + corners[i + 1].SetbackFactor;
+                if (factor > 0f)
+                    maximumRadius = Mathf.Min(maximumRadius, (lengths[i] - PointEpsilon) / factor);
+            }
+
+            if (radius > maximumRadius)
+            {
+                error = $"当前描点允许的圆角半径上限约为 {maximumRadius:G5}。请减小半径或加长直线段。";
+                return false;
+            }
+
+            if (minimumRadius > 0f && radius <= minimumRadius)
+            {
+                error = $"圆角半径需要大于 {minimumRadius:G5} 才能容纳当前墙厚。请放大圆角或减小墙厚。";
+                return false;
+            }
+
+            var samples = new List<Vector2>(sampleCount) { anchors[0].Position };
+            for (int i = 1; i < anchors.Count - 1; i++)
+            {
+                var corner = corners[i];
+                Vector2 position = anchors[i].Position;
+                if (corner.Steps == 0)
+                {
+                    if (!TryAppendSample(samples, position, out error))
+                        return false;
+                    continue;
+                }
+
+                float setback = radius * corner.SetbackFactor;
+                Vector2 incoming = directions[i - 1];
+                Vector2 entry = position - incoming * setback;
+                Vector2 exit = position + directions[i] * setback;
+                Vector2 radial = RightOf(incoming) * (Mathf.Sign(corner.Turn) * radius);
+                if (!TryAppendArc(samples, entry, exit, radial, corner.Turn, corner.Steps, out error))
+                    return false;
+            }
+
+            if (!TryAppendSample(samples, anchors[anchors.Count - 1].Position, out error))
+                return false;
+
+            path = samples;
+            return true;
+        }
+
+        private static bool TryAppendArc(List<Vector2> path, Vector2 entry, Vector2 exit, Vector2 radial,
+            float turn, int steps, out string error)
+        {
+            if (!TryAppendSample(path, entry, out error))
+                return false;
+
+            for (int i = 1; i < steps; i++)
+            {
+                float angle = turn * i / steps;
+                float sin = Mathf.Sin(angle);
+                float cos = Mathf.Cos(angle);
+                Vector2 rotated = new Vector2(radial.x * cos - radial.y * sin, radial.x * sin + radial.y * cos);
+                if (!TryAppendSample(path, entry + (rotated - radial), out error))
+                    return false;
+            }
+
+            return TryAppendSample(path, exit, out error);
+        }
+
+        private static bool TryAppendSample(List<Vector2> path, Vector2 point, out string error)
+        {
+            error = null;
+            float squaredDistance = (point - path[path.Count - 1]).sqrMagnitude;
+            if (!IsFinite(squaredDistance))
+            {
+                error = "路径坐标超出可生成范围。";
+                return false;
+            }
+
+            if (squaredDistance > PointEpsilon * PointEpsilon)
+                path.Add(point);
+
+            return true;
         }
 
         private static void AddSection(
